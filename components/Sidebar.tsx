@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
         { id: 'automod', label: 'Auto Moderation', icon: <ShieldCheckIcon /> },
         { id: 'chatbot', label: 'Chatbot', icon: <ChatBubbleIcon /> },
         { id: 'giveaways', label: 'Giveaways', icon: <GiftIcon /> },
-        { id: 'claimtime', label: 'Claim Time', icon: <ClockIcon /> },
+        { id: 'claimtime', label: 'Giveaway Claim Time', icon: <ClockIcon /> },
     ];
 
     return (

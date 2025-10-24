@@ -55,7 +55,7 @@ export interface GiveawaySettings {
 
 export interface ClaimTimeSettings {
     enabled: boolean;
-    roleId: string | null;
-    command: string;
-    frequencyHours: number;
+    defaultMinutes: number;
+    logic: 'additive' | 'highest';
+    roleTimes: { roleId: string; minutes: number }[];
 }

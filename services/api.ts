@@ -228,17 +228,20 @@ export const apiService = {
     getClaimTimeSettings: async (guildId: string): Promise<ClaimTimeSettings> => {
         const { data, error } = await supabase
             .from('guild_settings')
-            .select('claimtime_enabled, claimtime_role_id, claimtime_command, claimtime_frequency_hours')
+            .select('claimtime_enabled, claimtime_default_minutes, claimtime_logic, claimtime_role_times')
             .eq('guild_id', guildId)
             .single();
 
         if (error && error.code !== 'PGRST116') throw error;
 
+        // Ensure roleTimes is always an array
+        const roleTimes = Array.isArray(data?.claimtime_role_times) ? data.claimtime_role_times : [];
+
         return {
             enabled: data?.claimtime_enabled ?? false,
-            roleId: data?.claimtime_role_id ?? null,
-            command: data?.claimtime_command ?? "claim",
-            frequencyHours: data?.claimtime_frequency_hours ?? 24,
+            defaultMinutes: data?.claimtime_default_minutes ?? 60,
+            logic: data?.claimtime_logic === 'additive' ? 'additive' : 'highest',
+            roleTimes: roleTimes,
         };
     },
 
@@ -246,9 +249,9 @@ export const apiService = {
         const { error } = await supabase.from('guild_settings').upsert({
             guild_id: guildId,
             claimtime_enabled: settings.enabled,
-            claimtime_role_id: settings.roleId,
-            claimtime_command: settings.command,
-            claimtime_frequency_hours: settings.frequencyHours,
+            claimtime_default_minutes: settings.defaultMinutes,
+            claimtime_logic: settings.logic,
+            claimtime_role_times: settings.roleTimes,
         });
 
         if (error) {
