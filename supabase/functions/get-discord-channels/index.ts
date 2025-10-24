@@ -9,12 +9,15 @@ const corsHeaders = {
 }
 
 serve(async (req: Request) => {
+  console.log(`[get-discord-channels] Received request: ${req.method}`);
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
+    console.log('[get-discord-channels] Handling OPTIONS preflight request.');
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log('[get-discord-channels] Handling POST request.');
     // 1. Get guildId and accessToken from the request body
     const { guildId, accessToken } = await req.json()
     if (!guildId) throw new Error('Guild ID is required.')
@@ -29,7 +32,7 @@ serve(async (req: Request) => {
 
     if (!response.ok) {
       const errorBody = await response.text()
-      console.error('Discord API error:', errorBody)
+      console.error('[get-discord-channels] Discord API error:', errorBody)
       throw new Error(`Discord API request failed with status: ${response.status}`)
     }
 
@@ -47,6 +50,7 @@ serve(async (req: Request) => {
     })
   } catch (error) {
     // 5. Handle any errors and return a JSON response
+    console.error('[get-discord-channels] An error occurred:', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
