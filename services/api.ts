@@ -7,13 +7,12 @@ export const apiService = {
   getGuilds: async (): Promise<Guild[]> => {
     console.log("Fetching guilds via Supabase Function...");
     
-    // Get user and their identity data to find the Discord provider token
-    const { data: { user } } = await supabase.auth.getUser();
-    const discordIdentity = user?.identities?.find(identity => identity.provider === 'discord');
-    const accessToken = discordIdentity?.identity_data?.access_token;
+    // Get session to find the Discord provider token
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.provider_token;
 
     if (!accessToken) {
-      console.error('No Discord access token found in user identity.');
+      console.error('No Discord provider_token found in session.');
       throw new Error('Authentication error: Could not find Discord access token. Please try logging out and back in.');
     }
     console.log('Discord access token found. Invoking function...');
@@ -41,10 +40,9 @@ export const apiService = {
   getChannels: async (guildId: string): Promise<Channel[]> => {
      console.log(`Fetching channels for guild ${guildId} via Supabase Function...`);
      
-     // Get user and their identity data to find the Discord provider token
-     const { data: { user } } = await supabase.auth.getUser();
-     const discordIdentity = user?.identities?.find(identity => identity.provider === 'discord');
-     const accessToken = discordIdentity?.identity_data?.access_token;
+     // Get session to find the Discord provider token
+     const { data: { session } } = await supabase.auth.getSession();
+     const accessToken = session?.provider_token;
  
      if (!accessToken) {
        throw new Error('Authentication error: Could not find Discord access token.');
