@@ -15,21 +15,17 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing Authorization header');
+    const { guildId, accessToken } = await req.json();
+    if (!accessToken) {
+        throw new Error("Missing accessToken in request body");
     }
-
-    const { guildId } = await req.json();
     if (!guildId) {
         throw new Error("Missing guildId in request body");
     }
 
-    // The user's OAuth token works here because the Supabase Discord provider
-    // requests the 'guilds' scope by default, which allows reading channels.
     const channelsResponse = await fetch(`${DISCORD_API_URL}/guilds/${guildId}/channels`, {
       headers: {
-        Authorization: authHeader,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
     

@@ -16,15 +16,15 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing Authorization header');
+    const { accessToken } = await req.json();
+    if (!accessToken) {
+      throw new Error('Missing accessToken in request body');
     }
 
     // Fetch user's guilds from Discord API
     const guildsResponse = await fetch(`${DISCORD_API_URL}/users/@me/guilds`, {
       headers: {
-        Authorization: authHeader, // Forward the user's auth header
+        Authorization: `Bearer ${accessToken}`, // Use the token from the body
       },
     });
 

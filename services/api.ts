@@ -16,7 +16,7 @@ export const apiService = {
     console.log('Discord access token found. Invoking function...');
 
     const { data, error } = await supabase.functions.invoke('get-discord-guilds', {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      body: { accessToken }, // Pass the token in the body to avoid header conflicts
     });
 
     console.log('Supabase function response:', { data, error });
@@ -45,8 +45,7 @@ export const apiService = {
      }
 
     const { data, error } = await supabase.functions.invoke('get-discord-channels', {
-        body: { guildId },
-        headers: { Authorization: `Bearer ${accessToken}` },
+        body: { guildId, accessToken }, // Pass the token in the body
     });
     
     if (error) {
