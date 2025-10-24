@@ -52,11 +52,11 @@ const App: React.FC = () => {
 
   const handleLogin = async () => {
     setError(null);
-    console.log("Initiating Discord login with 'identify guilds' scopes...");
+    console.log("Initiating Discord login with 'identify guilds email' scopes...");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: {
-        scopes: 'identify guilds', // Request identify + guilds scopes for full access
+        scopes: 'identify guilds email', // Request identify, guilds, and email scopes
       },
     });
     if (error) {
