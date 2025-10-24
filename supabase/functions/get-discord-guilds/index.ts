@@ -1,5 +1,5 @@
 // supabase/functions/get-discord-guilds/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 
 const DISCORD_API_URL = 'https://discord.com/api/v10';
 const MANAGE_GUILD_PERMISSION = 0x20; // 32
@@ -7,6 +7,7 @@ const MANAGE_GUILD_PERMISSION = 0x20; // 32
 // Define shared headers for CORS to ensure they are consistently applied
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -19,7 +20,10 @@ serve(async (req) => {
   try {
     const { accessToken } = await req.json();
     if (!accessToken) {
-      throw new Error('Missing accessToken in request body');
+       return new Response(JSON.stringify({ error: 'Missing accessToken in request body' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
     }
 
     // Fetch user's guilds from Discord API
@@ -33,7 +37,10 @@ serve(async (req) => {
         const responseText = await guildsResponse.text();
         console.error(`Discord API Error: ${guildsResponse.status} ${guildsResponse.statusText}`);
         console.error(`Response Body: ${responseText}`);
-        throw new Error(`Discord API Error: ${guildsResponse.status} ${guildsResponse.statusText}.`);
+        return new Response(JSON.stringify({ error: `Discord API Error: ${guildsResponse.status} ${guildsResponse.statusText}` }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: guildsResponse.status,
+        });
     }
 
     const guilds = await guildsResponse.json();

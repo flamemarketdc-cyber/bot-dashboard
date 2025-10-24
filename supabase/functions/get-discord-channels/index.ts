@@ -1,11 +1,12 @@
 // supabase/functions/get-discord-channels/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 
 const DISCORD_API_URL = 'https://discord.com/api/v10';
 
 // Define shared headers for CORS to ensure they are consistently applied
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -18,10 +19,16 @@ serve(async (req) => {
   try {
     const { guildId, accessToken } = await req.json();
     if (!accessToken) {
-        throw new Error("Missing accessToken in request body");
+        return new Response(JSON.stringify({ error: "Missing accessToken in request body" }), {
+             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+             status: 400
+        });
     }
     if (!guildId) {
-        throw new Error("Missing guildId in request body");
+        return new Response(JSON.stringify({ error: "Missing guildId in request body" }), {
+             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+             status: 400
+        });
     }
 
     const channelsResponse = await fetch(`${DISCORD_API_URL}/guilds/${guildId}/channels`, {
@@ -34,7 +41,10 @@ serve(async (req) => {
         const responseText = await channelsResponse.text();
         console.error(`Discord API Error: ${channelsResponse.status} ${channelsResponse.statusText}`);
         console.error(`Response Body: ${responseText}`);
-        throw new Error(`Discord API Error: ${channelsResponse.status} ${channelsResponse.statusText}.`);
+        return new Response(JSON.stringify({ error: `Discord API Error: ${channelsResponse.status} ${channelsResponse.statusText}` }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: channelsResponse.status
+        });
     }
 
     const channels = await channelsResponse.json();
