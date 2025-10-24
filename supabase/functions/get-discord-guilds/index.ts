@@ -1,3 +1,6 @@
+// Fix: Added a triple-slash directive to include Deno's stable type definitions to resolve 'Cannot find name Deno' error.
+/// <reference types="https://deno.land/x/deno/types/stable.d.ts" />
+
 // supabase/functions/get-discord-guilds/index.ts
 
 // NOTE: Deno.serve is the modern, native, and recommended way to create an HTTP server in Deno.
