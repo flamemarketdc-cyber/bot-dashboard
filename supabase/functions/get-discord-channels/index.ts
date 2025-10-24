@@ -1,61 +1,55 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 
-const DISCORD_API_URL = 'https://discord.com/api/v10';
+const DISCORD_API_URL = 'https://discord.com/api/v10'
 
+// Define CORS headers for browser-based clients
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req: Request) => {
-  // This is needed if you're planning to invoke your function from a browser.
+  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { guildId, accessToken } = await req.json();
+    // 1. Get guildId and accessToken from the request body
+    const { guildId, accessToken } = await req.json()
+    if (!guildId) throw new Error('Guild ID is required.')
+    if (!accessToken) throw new Error('Access token is required.')
 
-    if (!guildId) {
-      return new Response(JSON.stringify({ error: 'Missing guildId' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
-    if (!accessToken) {
-      return new Response(JSON.stringify({ error: 'Missing accessToken' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
+    // 2. Fetch channels from the Discord API
+    const response = await fetch(`${DISCORD_API_URL}/guilds/${guildId}/channels`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
 
-    const discordRes = await fetch(`${DISCORD_API_URL}/guilds/${guildId}/channels`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    if (!discordRes.ok) {
-        const text = await discordRes.text();
-        console.error(`Discord API Error: ${text}`);
-        return new Response(JSON.stringify({ error: `Discord API Error: ${discordRes.statusText}` }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: discordRes.status,
-        });
+    if (!response.ok) {
+      const errorBody = await response.text()
+      console.error('Discord API error:', errorBody)
+      throw new Error(`Discord API request failed with status: ${response.status}`)
     }
 
-    const channels = await discordRes.json();
+    const channels = await response.json()
 
-    // Filter for text channels (type 0) and categories (type 4) for UI selectors
-    const relevantChannels = channels.filter((channel: any) => channel.type === 0 || channel.type === 4);
+    // 3. Filter for text channels (type 0) and categories (type 4) for UI selectors
+    const relevantChannels = channels.filter(
+      (channel: any) => channel.type === 0 || channel.type === 4
+    )
 
+    // 4. Return the filtered channels
     return new Response(JSON.stringify(relevantChannels), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-    });
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: 'Failed to fetch channels' }), {
+    })
+  } catch (error) {
+    // 5. Handle any errors and return a JSON response
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+      status: 400,
+    })
   }
-});
+})
