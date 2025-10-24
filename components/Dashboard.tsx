@@ -34,7 +34,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       })
       .catch(err => {
         console.error("Failed to fetch guilds in dashboard component", err);
-        setError("Could not fetch your servers from Discord. Please try logging out and back in. Check the console for more details.");
+        // Display the actual error message from the API call
+        setError(err.message || "An unknown error occurred while fetching servers.");
       })
       .finally(() => {
         console.log("Finished fetching guilds.");
@@ -52,7 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         .then(setChannels)
         .catch(err => {
             console.error("Failed to fetch channels", err)
-            setError(`Could not fetch channels for ${selectedGuild.name}. Please ensure the bot has permissions.`);
+            setError(err.message || `Could not fetch channels for ${selectedGuild.name}.`);
         })
         .finally(() => setLoadingChannels(false));
     }

@@ -30,9 +30,10 @@ serve(async (req) => {
     });
     
     if (!channelsResponse.ok) {
-        const errorBody = await channelsResponse.json();
-        console.error("Discord API error:", errorBody);
-        throw new Error(`Failed to fetch channels from Discord: ${channelsResponse.statusText}`);
+        const responseText = await channelsResponse.text();
+        console.error(`Discord API Error: ${channelsResponse.status} ${channelsResponse.statusText}`);
+        console.error(`Response Body: ${responseText}`);
+        throw new Error(`Discord API Error: ${channelsResponse.status} ${channelsResponse.statusText}.`);
     }
 
     const channels = await channelsResponse.json();
@@ -48,6 +49,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("Error in get-discord-channels function:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: {
         'Content-Type': 'application/json',

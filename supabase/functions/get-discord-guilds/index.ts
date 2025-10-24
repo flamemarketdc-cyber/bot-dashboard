@@ -29,9 +29,11 @@ serve(async (req) => {
     });
 
     if (!guildsResponse.ok) {
-        const errorBody = await guildsResponse.json();
-        console.error("Discord API error:", errorBody);
-        throw new Error(`Failed to fetch guilds from Discord: ${guildsResponse.statusText}`);
+        const responseText = await guildsResponse.text();
+        console.error(`Discord API Error: ${guildsResponse.status} ${guildsResponse.statusText}`);
+        console.error(`Response Body: ${responseText}`);
+        // Throw a detailed error to be caught by the client
+        throw new Error(`Discord API Error: ${guildsResponse.status} ${guildsResponse.statusText}.`);
     }
 
     const guilds = await guildsResponse.json();
@@ -57,6 +59,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("Error in get-discord-guilds function:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: {
         'Content-Type': 'application/json',
