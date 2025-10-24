@@ -16,17 +16,26 @@ serve(async (req: Request) => {
   }
 
   try {
+    // 1. Get guildId from request
     const { guildId } = await req.json()
-    if (!guildId) throw new Error('Guild ID is required.')
+    if (!guildId) {
+      return new Response(JSON.stringify({ error: 'Guild ID is required.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
 
-    // Retrieve the bot token from environment variables (Supabase secrets)
+    // 2. Get Bot Token from secrets
     const botToken = (Deno as any).env.get('TOKEN');
     if (!botToken) {
         console.error('[get-discord-channels] TOKEN secret not set in Supabase.');
-        throw new Error('Bot token is not configured on the server. Please ensure the TOKEN secret is set in your Supabase project.');
+        return new Response(JSON.stringify({ error: 'Bot token is not configured on the server. Please ensure the TOKEN secret is set in your Supabase project.' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500, // Internal Server Error - configuration issue
+        });
     }
 
-    // Fetch channels from the Discord API using the bot token
+    // 3. Fetch channels from Discord API
     const response = await fetch(`${DISCORD_API_URL}/guilds/${guildId}/channels`, {
       headers: {
         Authorization: `Bot ${botToken}`,
@@ -36,25 +45,31 @@ serve(async (req: Request) => {
     if (!response.ok) {
       const errorBody = await response.text();
       console.error(`[get-discord-channels] Discord API error: ${response.status}`, errorBody)
-      throw new Error(`Discord API Error (${response.status}): ${errorBody}`)
+      const details = JSON.parse(errorBody);
+      // Pass Discord's error through
+      return new Response(JSON.stringify({ error: `Discord API Error (${response.status}): ${details.message || 'Unknown error.'}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 502, // Bad Gateway - error from upstream service
+      });
     }
 
+    // 4. Process and return channels
     const channels = await response.json()
-
-    // Filter for text channels (type 0) and categories (type 4) for UI selectors
     const relevantChannels = channels.filter(
       (channel: any) => channel.type === 0 || channel.type === 4
-    )
+    );
 
     return new Response(JSON.stringify(relevantChannels), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
+
   } catch (error) {
-    console.error('[get-discord-channels] An error occurred:', error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('[get-discord-channels] An unexpected error occurred:', error.message);
+    // This catches errors like failed req.json() or other unexpected issues
+    return new Response(JSON.stringify({ error: 'An internal server error occurred while processing the request.' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 500,
     })
   }
 })
