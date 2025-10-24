@@ -53,6 +53,10 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
     return <div className="flex items-center justify-center h-full"><Spinner size="lg" /></div>;
   }
 
+  // Filter channels for different select inputs
+  const textChannels = channels.filter(c => c.type === 0);
+  const categoryChannels = channels.filter(c => c.type === 4);
+
   return (
     <div className="p-6 md:p-8">
       <h2 className="text-2xl font-bold text-white mb-1">Ticket System</h2>
@@ -64,7 +68,7 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
           name="panelChannelId"
           value={settings.panelChannelId ?? ""}
           onChange={handleSelectChange}
-          options={channels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
+          options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
           placeholder="Channel to create tickets in"
         />
         
@@ -73,7 +77,7 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
           name="categoryId"
           value={settings.categoryId ?? ""}
           onChange={handleSelectChange}
-          options={channels.map(c => ({ value: c.id, label: `# ${c.name}` }))} // Note: Real app would filter for categories
+          options={categoryChannels.map(c => ({ value: c.id, label: `📁 ${c.name}` }))}
           placeholder="Category to create new tickets under"
         />
         

@@ -3,15 +3,16 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const DISCORD_API_URL = 'https://discord.com/api/v10';
 
+// Define shared headers for CORS to ensure they are consistently applied
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -38,13 +39,13 @@ serve(async (req) => {
 
     const channels = await channelsResponse.json();
 
-    // Filter for text channels only (type 0)
-    const textChannels = channels.filter((channel: any) => channel.type === 0);
+    // Filter for text channels only (type 0) and categories (type 4)
+    const textChannels = channels.filter((channel: any) => channel.type === 0 || channel.type === 4);
 
     return new Response(JSON.stringify(textChannels), {
       headers: {
+        ...corsHeaders,
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
       },
       status: 200,
     });
@@ -52,8 +53,8 @@ serve(async (req) => {
     console.error("Error in get-discord-channels function:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: {
+        ...corsHeaders,
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
       },
       status: 500,
     });

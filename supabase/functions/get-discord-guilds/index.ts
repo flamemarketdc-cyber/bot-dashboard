@@ -4,15 +4,16 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 const DISCORD_API_URL = 'https://discord.com/api/v10';
 const MANAGE_GUILD_PERMISSION = 0x20; // 32
 
+// Define shared headers for CORS to ensure they are consistently applied
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -24,7 +25,7 @@ serve(async (req) => {
     // Fetch user's guilds from Discord API
     const guildsResponse = await fetch(`${DISCORD_API_URL}/users/@me/guilds`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`, // Use the token from the body
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -32,7 +33,6 @@ serve(async (req) => {
         const responseText = await guildsResponse.text();
         console.error(`Discord API Error: ${guildsResponse.status} ${guildsResponse.statusText}`);
         console.error(`Response Body: ${responseText}`);
-        // Throw a detailed error to be caught by the client
         throw new Error(`Discord API Error: ${guildsResponse.status} ${guildsResponse.statusText}.`);
     }
 
@@ -53,8 +53,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify(manageableGuilds), {
       headers: {
+        ...corsHeaders,
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
       },
       status: 200,
     });
@@ -62,8 +62,8 @@ serve(async (req) => {
     console.error("Error in get-discord-guilds function:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: {
+        ...corsHeaders,
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
       },
       status: 500,
     });
