@@ -49,15 +49,14 @@ export const apiService = {
   getChannels: async (guildId: string): Promise<Channel[]> => {
      console.log(`Fetching channels for guild ${guildId} via Supabase Function...`);
      
+     // We still need to ensure the user is logged in to make an authenticated function call
      const { data: { session } } = await supabase.auth.getSession();
-     const accessToken = session?.provider_token;
- 
-     if (!accessToken) {
-       throw new Error('Authentication error: Could not find Discord access token.');
+     if (!session) {
+       throw new Error('Authentication error: User is not logged in.');
      }
 
     const { data, error } = await supabase.functions.invoke('get-discord-channels', {
-        body: { guildId, accessToken },
+        body: { guildId }, // accessToken is no longer needed here
     });
     
     if (error) {

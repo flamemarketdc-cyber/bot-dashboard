@@ -18,21 +18,28 @@ serve(async (req: Request) => {
 
   try {
     console.log('[get-discord-channels] Handling POST request.');
-    // 1. Get guildId and accessToken from the request body
-    const { guildId, accessToken } = await req.json()
+    // 1. Get guildId from the request body. We don't need the user's accessToken.
+    const { guildId } = await req.json()
     if (!guildId) throw new Error('Guild ID is required.')
-    if (!accessToken) throw new Error('Access token is required.')
 
-    // 2. Fetch channels from the Discord API
+    // Retrieve the bot token from environment variables (Supabase secrets)
+    // Fix: Cast Deno to any to resolve TypeScript error regarding missing 'env' property.
+    const botToken = (Deno as any).env.get('DISCORD_BOT_TOKEN');
+    if (!botToken) {
+        console.error('[get-discord-channels] DISCORD_BOT_TOKEN secret not set in Supabase.');
+        throw new Error('Bot token is not configured on the server.');
+    }
+
+    // 2. Fetch channels from the Discord API using the bot token
     const response = await fetch(`${DISCORD_API_URL}/guilds/${guildId}/channels`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bot ${botToken}`, // Correct authorization header for bot actions
       },
     })
 
     if (!response.ok) {
       const errorBody = await response.text()
-      console.error('[get-discord-channels] Discord API error:', errorBody)
+      console.error(`[get-discord-channels] Discord API error: ${response.status}`, errorBody)
       throw new Error(`Discord API request failed with status: ${response.status}`)
     }
 
