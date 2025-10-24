@@ -1,5 +1,5 @@
-// Fix: Added a triple-slash directive to include Deno's stable type definitions to resolve 'Cannot find name Deno' error.
-/// <reference types="https://deno.land/x/deno/types/stable.d.ts" />
+// Fix: Use `serve` from `std/http` to resolve Deno namespace type errors.
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
 // supabase/functions/get-discord-channels/index.ts
 
@@ -16,7 +16,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   // Handle CORS preflight request immediately.
   // The browser sends this OPTIONS request first to check if the actual request is safe to send.
   if (req.method === 'OPTIONS') {
@@ -77,6 +77,3 @@ Deno.serve(async (req: Request) => {
     });
   }
 });
-
-// Fix: Add an empty export to treat this file as a module and prevent global scope pollution.
-export {};
