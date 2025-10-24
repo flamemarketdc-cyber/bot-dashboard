@@ -50,14 +50,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
   useEffect(() => {
     if (selectedGuild) {
-      setLoadingChannels(true);
-      setError(null);
       setChannels([]);
       setActiveModule('dashboard');
       
       const fetchAllSettings = async () => {
+          setLoadingChannels(true);
+          setError(null);
           try {
-              const [ch, gen, tkt, am, cb, gv, ct] = await Promise.all([
+              const results = await Promise.allSettled([
                   apiService.getChannels(selectedGuild.id),
                   apiService.getGeneralSettings(selectedGuild.id),
                   apiService.getTicketSettings(selectedGuild.id),
@@ -66,15 +66,70 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   apiService.getGiveawaySettings(selectedGuild.id),
                   apiService.getClaimTimeSettings(selectedGuild.id),
               ]);
-              setChannels(ch);
-              setPrefix(gen.prefix);
-              setTicketEnabled(!!tkt.panelChannelId);
-              setAutoModEnabled(am.enabled);
-              setChatbotEnabled(cb.enabled);
-              setGiveawaysConfigured(gv.managerRoleIds.length > 0);
-              setClaimTimeEnabled(ct.enabled);
-          } catch (err: any) {
-              setError("Could not fetch all settings for this server. Some modules may be unavailable.");
+
+              const [chRes, genRes, tktRes, amRes, cbRes, gvRes, ctRes] = results;
+              const failedModules: string[] = [];
+
+              if (chRes.status === 'fulfilled') setChannels(chRes.value);
+              else {
+                  console.error("Failed to fetch channels:", chRes.reason);
+                  failedModules.push('Channels');
+                  setChannels([]);
+              }
+
+              if (genRes.status === 'fulfilled') setPrefix(genRes.value.prefix);
+              else {
+                  console.error("Failed to fetch general settings:", genRes.reason);
+                  setPrefix(','); // set default
+                  failedModules.push('General Settings');
+              }
+
+              if (tktRes.status === 'fulfilled') setTicketEnabled(!!tktRes.value.panelChannelId);
+              else {
+                  console.error("Failed to fetch ticket settings:", tktRes.reason);
+                  setTicketEnabled(false);
+                  failedModules.push('Ticket System');
+              }
+              
+              if (amRes.status === 'fulfilled') setAutoModEnabled(amRes.value.enabled);
+              else {
+                  console.error("Failed to fetch automod settings:", amRes.reason);
+                  setAutoModEnabled(false);
+                  failedModules.push('Auto Moderation');
+              }
+              
+              if (cbRes.status === 'fulfilled') setChatbotEnabled(cbRes.value.enabled);
+              else {
+                  console.error("Failed to fetch chatbot settings:", cbRes.reason);
+                  setChatbotEnabled(false);
+                  failedModules.push('Chatbot');
+              }
+              
+              if (gvRes.status === 'fulfilled') setGiveawaysConfigured(gvRes.value.managerRoleIds.length > 0);
+              else {
+                  console.error("Failed to fetch giveaway settings:", gvRes.reason);
+                  setGiveawaysConfigured(false);
+                  failedModules.push('Giveaways');
+              }
+              
+              if (ctRes.status === 'fulfilled') setClaimTimeEnabled(ctRes.value.enabled);
+              else {
+                  console.error("Failed to fetch claim time settings:", ctRes.reason);
+                  setClaimTimeEnabled(false);
+                  failedModules.push('Giveaway Claim Time');
+              }
+
+              if (failedModules.length > 0) {
+                  if (failedModules.includes('Channels')) {
+                      setError(`CRITICAL: Could not fetch server channels. Most settings will be unavailable. Other failed modules: ${failedModules.filter(m => m !== 'Channels').join(', ')}`);
+                  } else {
+                      setError(`Could not fetch settings for: ${failedModules.join(', ')}. These modules may show default values.`);
+                  }
+              }
+
+          } catch (err: any) { // This catch is for Promise.allSettled itself failing, which is very rare
+              setError("A critical error occurred while fetching server data.");
+              console.error("Critical fetch error:", err);
           } finally {
               setLoadingChannels(false);
           }
@@ -128,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 <StatCard title="Auto Moderation" value={autoModEnabled ? 'Active' : 'Inactive'} status={autoModEnabled} icon={<ShieldCheckIcon />} />
                 <StatCard title="Chatbot" value={chatbotEnabled ? 'Active' : 'Inactive'} status={chatbotEnabled} icon={<ChatBubbleIcon />} />
                 <StatCard title="Giveaways" value={giveawaysConfigured ? 'Configured' : 'Not Set Up'} status={giveawaysConfigured} icon={<GiftIcon />} />
-                <StatCard title="Claim Time" value={claimTimeEnabled ? 'Active' : 'Inactive'} status={claimTimeEnabled} icon={<ClockIcon />} />
+                <StatCard title="Giveaway Claim Time" value={claimTimeEnabled ? 'Active' : 'Inactive'} status={claimTimeEnabled} icon={<ClockIcon />} />
             </div>
         </div>;
       case 'general':
