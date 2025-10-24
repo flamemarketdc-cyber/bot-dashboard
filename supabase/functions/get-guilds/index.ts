@@ -1,19 +1,11 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { corsHeaders } from '../_shared/cors.ts'
 
 const DISCORD_API_URL = 'https://discord.com/api/v10'
 const MANAGE_GUILD_PERMISSION = 0x20 // Hex for "Manage Server"
 
-// Define CORS headers for browser-based clients
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req: Request) => {
-  // Handle CORS preflight request
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
@@ -63,4 +55,4 @@ serve(async (req: Request) => {
       status: 400,
     })
   }
-})
+});

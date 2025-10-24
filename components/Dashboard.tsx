@@ -209,7 +209,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
     return (
        <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
         <Header user={user} onLogout={onLogout} />
-        <div className="w-full max-w-lg bg-slate-900/50 backdrop-blur-sm shadow-2xl rounded-xl p-8 border border-red-700/60 text-center">
+        <div className="w-full max-w-lg bg-zinc-900/50 backdrop-blur-sm shadow-2xl rounded-xl p-8 border border-red-700/60 text-center">
             <ErrorIcon className="h-16 w-16 text-red-400 mx-auto mb-6" />
             <h2 className="text-2xl font-bold text-white mb-4">Failed to Fetch Servers</h2>
             <p className="text-red-300">{error}</p>
@@ -222,10 +222,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
           <Header user={user} onLogout={onLogout} />
-           <div className="w-full max-w-lg bg-slate-900/50 backdrop-blur-sm shadow-2xl shadow-red-900/10 rounded-xl p-8 border border-slate-700/60 text-center animate-fade-in-up">
+           <div className="w-full max-w-lg bg-zinc-900/50 backdrop-blur-sm shadow-2xl shadow-red-900/10 rounded-xl p-8 border border-zinc-700/60 text-center animate-fade-in-up">
             <DiscordLogoIcon className="h-16 w-16 text-red-500 mx-auto mb-6" />
             <h2 className="text-3xl font-bold text-white mb-4">Select a Server</h2>
-            <p className="text-slate-400 mb-6">
+            <p className="text-zinc-400 mb-6">
                 {loadingGuilds
                     ? 'Fetching your servers...'
                     : guilds.length > 0
@@ -267,7 +267,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
                     </div>
                     <div className="ml-3 flex-1">
                         <h3 className="text-md font-semibold text-red-300">There was an issue loading server data</h3>
-                        <p className="text-sm text-slate-300 mt-1">{error}</p>
+                        <p className="text-sm text-zinc-300 mt-1">{error}</p>
                     </div>
                 </div>
             </div>

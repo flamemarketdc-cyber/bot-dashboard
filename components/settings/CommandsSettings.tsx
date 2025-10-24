@@ -12,12 +12,12 @@ interface CommandsSettingsProps {
 }
 
 const SettingsClickableCard: React.FC<{icon: React.ReactNode, title: string, description: string, href: string}> = ({icon, title, description, href}) => (
-    <a href={href} className="w-full flex items-center justify-between bg-slate-900/50 backdrop-blur-sm border border-slate-700/60 rounded-lg p-6 transition-all duration-200 hover:border-red-500/60 hover:bg-slate-800/50">
+    <a href={href} className="w-full flex items-center justify-between bg-zinc-900/50 backdrop-blur-sm border border-zinc-700/60 rounded-lg p-6 transition-all duration-200 hover:border-red-500/60 hover:bg-zinc-800/50">
         <div className="flex items-center gap-6">
             {icon}
             <div>
-                <h4 className="text-lg font-bold text-slate-100">{title}</h4>
-                <p className="text-sm text-slate-400">{description}</p>
+                <h4 className="text-lg font-bold text-zinc-100">{title}</h4>
+                <p className="text-sm text-zinc-400">{description}</p>
             </div>
         </div>
         <ChevronRightIcon />
@@ -101,8 +101,8 @@ const CommandsSettings: React.FC<CommandsSettingsProps> = ({ guild }) => {
 
       <SettingsCard title="Prefixes">
         <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-slate-400">Put one of the following prefixes in front of your message to execute commands.</p>
-            <span className="text-xs font-semibold bg-slate-700 text-slate-300 px-2 py-1 rounded-md">{settings.prefixes.length}/5</span>
+            <p className="text-sm text-zinc-400">Put one of the following prefixes in front of your message to execute commands.</p>
+            <span className="text-xs font-semibold bg-zinc-700 text-zinc-300 px-2 py-1 rounded-md">{settings.prefixes.length}/5</span>
         </div>
         <div className="flex items-center gap-2 mb-4">
             <input
@@ -111,21 +111,21 @@ const CommandsSettings: React.FC<CommandsSettingsProps> = ({ guild }) => {
                 onChange={(e) => setNewPrefix(e.target.value)}
                 maxLength={5}
                 placeholder="New prefix..."
-                className="flex-grow bg-slate-900 border border-slate-700/80 rounded-lg p-2 text-slate-200 focus:ring-2 focus:ring-red-500"
+                className="flex-grow bg-zinc-900 border border-zinc-700/80 rounded-lg p-2 text-zinc-200 focus:ring-2 focus:ring-red-500"
             />
             <button
                 onClick={addPrefix}
                 disabled={!newPrefix || settings.prefixes.length >= 5}
-                className="red-gradient-bg text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-all disabled:bg-slate-600 disabled:cursor-not-allowed"
+                className="red-gradient-bg text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-all disabled:bg-zinc-600 disabled:cursor-not-allowed"
             >
                 Add
             </button>
         </div>
         <div className="flex flex-wrap gap-2">
             {settings.prefixes.map(prefix => (
-                <div key={prefix} className="flex items-center gap-2 bg-slate-800/70 py-1 pl-3 pr-1 rounded-full">
-                    <span className="font-mono text-slate-200">{prefix}</span>
-                    <button onClick={() => removePrefix(prefix)} className="p-1 text-slate-400 hover:text-red-400 transition rounded-full hover:bg-red-900/40">
+                <div key={prefix} className="flex items-center gap-2 bg-zinc-800/70 py-1 pl-3 pr-1 rounded-full">
+                    <span className="font-mono text-zinc-200">{prefix}</span>
+                    <button onClick={() => removePrefix(prefix)} className="p-1 text-zinc-400 hover:text-red-400 transition rounded-full hover:bg-red-900/40">
                         <TrashIcon />
                     </button>
                 </div>
@@ -141,7 +141,7 @@ const CommandsSettings: React.FC<CommandsSettingsProps> = ({ guild }) => {
                 checked={settings.errorCommandNotFoundEnabled}
                 onChange={(e) => handleToggle(e, 'errorCommandNotFoundEnabled')}
             />
-            <hr className="border-slate-700/60" />
+            <hr className="border-zinc-700/60" />
              <Toggle 
                 label="Wrong command usage"
                 description="Sent when an existing command is used incorrectly."

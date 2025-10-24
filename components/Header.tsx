@@ -27,20 +27,20 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, guilds, selectedGuild, 
   }, []);
   
   return (
-    <header className="w-full p-4 px-8 flex justify-between items-center flex-shrink-0 bg-[#16191C] border-b border-slate-700/40">
+    <header className="w-full p-4 px-8 flex justify-between items-center flex-shrink-0 bg-[#16191C] border-b border-zinc-700/40">
       <div className="flex items-center gap-4">
         {selectedGuild ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-3 p-2 rounded-lg transition-colors bg-slate-800/50 hover:bg-slate-700/70"
+                className="flex items-center gap-3 p-2 rounded-lg transition-colors bg-zinc-800/50 hover:bg-zinc-700/70"
               >
                 <img src={selectedGuild.icon} alt={selectedGuild.name} className="w-10 h-10 rounded-md" />
                 <span className="text-md font-semibold text-white">{selectedGuild.name}</span>
                 <ChevronDownIcon className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               {isDropdownOpen && guilds && onGuildChange && (
-                 <div className="absolute top-full mt-2 w-72 bg-[#282b30] border border-slate-700 rounded-lg shadow-2xl z-10 animate-fade-in-up" style={{animationDuration: '0.2s'}}>
+                 <div className="absolute top-full mt-2 w-72 bg-zinc-800 border border-zinc-700 rounded-lg shadow-2xl z-10 animate-fade-in-up" style={{animationDuration: '0.2s'}}>
                     <div className="p-2">
                       {guilds.filter(g => g.id !== selectedGuild.id).map(guild => (
                         <button
@@ -49,10 +49,10 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, guilds, selectedGuild, 
                             onGuildChange(guild.id);
                             setIsDropdownOpen(false);
                           }}
-                          className="w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors hover:bg-slate-700/50"
+                          className="w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors hover:bg-zinc-700/50"
                         >
                            <img src={guild.icon} alt={guild.name} className="w-9 h-9 rounded-md" />
-                           <span className="text-sm font-medium text-slate-200">{guild.name}</span>
+                           <span className="text-sm font-medium text-zinc-200">{guild.name}</span>
                         </button>
                       ))}
                     </div>
@@ -70,11 +70,11 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, guilds, selectedGuild, 
         <img
           src={user.avatar}
           alt={`${user.username}'s avatar`}
-          className="w-11 h-11 rounded-full border-2 border-slate-600"
+          className="w-11 h-11 rounded-full border-2 border-zinc-600"
         />
         <button
           onClick={onLogout}
-          className="bg-slate-800/50 hover:bg-red-600/80 text-slate-300 hover:text-white font-semibold p-3 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110"
+          className="bg-zinc-800/50 hover:bg-red-600/80 text-zinc-300 hover:text-white font-semibold p-3 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110"
           aria-label="Logout"
         >
           <LogoutIcon />

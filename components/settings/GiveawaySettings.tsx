@@ -56,10 +56,10 @@ const GiveawaySettings: React.FC<GiveawaySettingsProps> = ({ guild }) => {
       apiResponse={apiResponse}
     >
       <SettingsCard title="Permissions">
-        <label htmlFor="managerRoleIds" className="block text-sm font-medium text-slate-300 mb-2">
+        <label htmlFor="managerRoleIds" className="block text-sm font-medium text-zinc-300 mb-2">
             Giveaway Manager Role IDs
         </label>
-        <p className="text-xs text-slate-400 mb-3">Users with these roles can start, end, and manage giveaways.</p>
+        <p className="text-xs text-zinc-400 mb-3">Users with these roles can start, end, and manage giveaways.</p>
         <input
             type="text"
             id="managerRoleIds"
@@ -67,16 +67,16 @@ const GiveawaySettings: React.FC<GiveawaySettingsProps> = ({ guild }) => {
             value={settings.managerRoleIds}
             onChange={handleInputChange}
             placeholder="Enter role IDs, separated by commas"
-            className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+            className="w-full bg-zinc-900 border border-zinc-700/80 rounded-lg p-3 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
         />
-        <p className="text-xs text-slate-500 mt-1">Separate multiple role IDs with a comma.</p>
+        <p className="text-xs text-zinc-500 mt-1">Separate multiple role IDs with a comma.</p>
       </SettingsCard>
         
       <SettingsCard title="Defaults">
-        <label htmlFor="defaultEmoji" className="block text-sm font-medium text-slate-300 mb-2">
+        <label htmlFor="defaultEmoji" className="block text-sm font-medium text-zinc-300 mb-2">
             Default Reaction Emoji
         </label>
-        <p className="text-xs text-slate-400 mb-3">The emoji users must react with to enter giveaways.</p>
+        <p className="text-xs text-zinc-400 mb-3">The emoji users must react with to enter giveaways.</p>
         <input
             type="text"
             id="defaultEmoji"
@@ -84,7 +84,7 @@ const GiveawaySettings: React.FC<GiveawaySettingsProps> = ({ guild }) => {
             value={settings.defaultEmoji}
             onChange={handleInputChange}
             placeholder="e.g., 🎉"
-            className="w-full max-w-xs bg-slate-900 border border-slate-700/80 rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+            className="w-full max-w-xs bg-zinc-900 border border-zinc-700/80 rounded-lg p-3 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
         />
       </SettingsCard>
     </SettingsLayout>

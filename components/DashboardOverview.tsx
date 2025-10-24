@@ -14,14 +14,14 @@ interface DashboardOverviewProps {
 }
 
 const StatCard: React.FC<{title: string; value: string; status?: boolean; icon: React.ReactNode}> = ({title, value, status, icon}) => (
-    <div className="bg-[#16191C]/50 backdrop-blur-sm p-6 rounded-lg border border-slate-700/60 flex items-start gap-4 transition-all duration-300 hover:bg-slate-800/60 hover:border-red-500/50 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-900/20">
-      <div className="bg-slate-900 p-3 rounded-full border border-slate-700">{icon}</div>
+    <div className="bg-[#16191C]/50 backdrop-blur-sm p-6 rounded-lg border border-zinc-700/60 flex items-start gap-4 transition-all duration-300 hover:bg-zinc-800/60 hover:border-red-500/50 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-900/20">
+      <div className="bg-zinc-900 p-3 rounded-full border border-zinc-700">{icon}</div>
       <div>
-          <p className="text-slate-400 text-sm font-medium">{title}</p>
-          <p className="text-slate-100 text-lg font-bold">{value}</p>
+          <p className="text-zinc-400 text-sm font-medium">{title}</p>
+          <p className="text-zinc-100 text-lg font-bold">{value}</p>
       </div>
       {status !== undefined && (
-          <span className={`ml-auto text-xs font-semibold px-2.5 py-1 rounded-full ${status ? 'bg-green-500/20 text-green-300' : 'bg-slate-600/50 text-slate-300'}`}>
+          <span className={`ml-auto text-xs font-semibold px-2.5 py-1 rounded-full ${status ? 'bg-green-500/20 text-green-300' : 'bg-zinc-700/50 text-zinc-300'}`}>
               {status ? 'Enabled' : 'Disabled'}
           </span>
       )}
@@ -40,7 +40,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     return (
         <div className="p-6 md:p-8 animate-fade-in-up">
             <h2 className="text-4xl font-black red-gradient-text mb-2">Mission Control</h2>
-            <p className="text-slate-400 mb-8">High-level overview of the bot's status in <span className="font-semibold text-red-400">{selectedGuild?.name}</span>.</p>
+            <p className="text-zinc-400 mb-8">High-level overview of the bot's status in <span className="font-semibold text-red-400">{selectedGuild?.name}</span>.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard title="Bot Prefix" value={`'${prefix}'`} icon={<CogIcon />} />
                 <StatCard title="Ticket System" value={ticketEnabled ? 'Active' : 'Not Set Up'} status={ticketEnabled} icon={<TicketIcon />} />

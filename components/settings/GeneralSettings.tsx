@@ -66,7 +66,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
       apiResponse={apiResponse}
     >
       <SettingsCard title="Bot Prefix">
-        <label htmlFor="prefix" className="block text-sm font-medium text-slate-300 mb-2">
+        <label htmlFor="prefix" className="block text-sm font-medium text-zinc-300 mb-2">
           The character the bot responds to.
         </label>
         <input
@@ -75,7 +75,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
           name="prefix"
           value={settings.prefix}
           onChange={handleInputChange}
-          className="w-full max-w-xs bg-slate-900 border border-slate-700/80 rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+          className="w-full max-w-xs bg-zinc-900 border border-zinc-700/80 rounded-lg p-3 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
         />
       </SettingsCard>
 

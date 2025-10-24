@@ -92,10 +92,10 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
       </SettingsCard>
         
       <SettingsCard title="Permissions">
-        <label htmlFor="supportRoleIds" className="block text-sm font-medium text-slate-300 mb-2">
+        <label htmlFor="supportRoleIds" className="block text-sm font-medium text-zinc-300 mb-2">
           Support Role IDs
         </label>
-        <p className="text-xs text-slate-400 mb-2">Users with these roles can view and respond to tickets.</p>
+        <p className="text-xs text-zinc-400 mb-2">Users with these roles can view and respond to tickets.</p>
         <input
           type="text"
           id="supportRoleIds"
@@ -103,9 +103,9 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
           value={settings.supportRoleIds}
           onChange={handleInputChange}
           placeholder="Enter role IDs, separated by commas"
-          className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+          className="w-full bg-zinc-900 border border-zinc-700/80 rounded-lg p-3 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
         />
-        <p className="text-xs text-slate-500 mt-1">Separate multiple role IDs with a comma (e.g., 87654321,12345678).</p>
+        <p className="text-xs text-zinc-500 mt-1">Separate multiple role IDs with a comma (e.g., 87654321,12345678).</p>
       </SettingsCard>
     </SettingsLayout>
   );

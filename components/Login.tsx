@@ -8,12 +8,12 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin, error }) => {
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-900/50 backdrop-blur-sm shadow-2xl shadow-red-900/10 rounded-xl p-8 border border-slate-700/60 text-center animate-fade-in-up">
+    <div className="w-full max-w-md mx-auto bg-zinc-900/50 backdrop-blur-sm shadow-2xl shadow-red-900/10 rounded-xl p-8 border border-zinc-700/60 text-center animate-fade-in-up">
       <div className="flex justify-center mb-6">
          <DiscordLogoIcon className="h-16 w-16 text-red-500" />
       </div>
       <h1 className="text-4xl font-black red-gradient-text mb-2">Bot Command</h1>
-      <p className="text-slate-400 mb-8">Please log in with Discord to access the control panel.</p>
+      <p className="text-zinc-400 mb-8">Please log in with Discord to access the control panel.</p>
       
       {error && <p className="bg-red-900/50 text-red-300 border border-red-700/80 p-3 rounded-md mb-6">{error}</p>}
       
