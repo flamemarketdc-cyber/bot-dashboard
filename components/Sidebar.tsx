@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HomeIcon, CogIcon, TicketIcon, ShieldCheckIcon, ChatBubbleIcon, GiftIcon, ClockIcon } from './Icons';
 
 interface SidebarProps {
-  activeModule: string;
-  setActiveModule: (module: string) => void;
 }
 
 const NavItem: React.FC<{
@@ -11,10 +9,10 @@ const NavItem: React.FC<{
     label: string;
     isActive: boolean;
     isExpanded: boolean;
-    onClick: () => void;
-}> = ({ icon, label, isActive, isExpanded, onClick }) => (
-    <button
-        onClick={onClick}
+    href: string;
+}> = ({ icon, label, isActive, isExpanded, href }) => (
+    <a
+        href={href}
         className={`w-full flex items-center gap-4 px-4 h-12 rounded-lg text-left transition-all duration-200 relative ${
             isActive 
                 ? 'bg-red-900/40 text-white font-semibold' 
@@ -24,11 +22,20 @@ const NavItem: React.FC<{
         {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 red-gradient-bg rounded-r-full"></div>}
         {icon}
         <span className={`transition-opacity duration-100 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>{label}</span>
-    </button>
+    </a>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
+const Sidebar: React.FC<SidebarProps> = () => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [activePath, setActivePath] = useState(window.location.hash || '#/dashboard');
+
+    useEffect(() => {
+        const handleHashChange = () => {
+            setActivePath(window.location.hash || '#/dashboard');
+        };
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
     
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: <HomeIcon /> },
@@ -55,9 +62,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
                         key={item.id}
                         icon={item.icon}
                         label={item.label}
-                        isActive={activeModule === item.id}
+                        href={`#/${item.id}`}
+                        isActive={activePath === `#/${item.id}`}
                         isExpanded={isExpanded}
-                        onClick={() => setActiveModule(item.id)}
                     />
                 ))}
             </nav>

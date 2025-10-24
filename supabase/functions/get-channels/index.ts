@@ -28,7 +28,7 @@ serve(async (req: Request) => {
     // 2. Get Bot Token from secrets
     const botToken = (Deno as any).env.get('TOKEN');
     if (!botToken) {
-        console.error('[get-discord-channels] TOKEN secret not set in Supabase.');
+        console.error('[get-channels] TOKEN secret not set in Supabase.');
         return new Response(JSON.stringify({ error: 'Bot token is not configured on the server. Please ensure the TOKEN secret is set in your Supabase project.' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 500, // Internal Server Error - configuration issue
@@ -44,7 +44,7 @@ serve(async (req: Request) => {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error(`[get-discord-channels] Discord API error: ${response.status}`, errorBody)
+      console.error(`[get-channels] Discord API error: ${response.status}`, errorBody)
       const details = JSON.parse(errorBody);
       // Pass Discord's error through
       return new Response(JSON.stringify({ error: `Discord API Error (${response.status}): ${details.message || 'Unknown error.'}` }), {
@@ -65,7 +65,7 @@ serve(async (req: Request) => {
     })
 
   } catch (error) {
-    console.error('[get-discord-channels] An unexpected error occurred:', error.message);
+    console.error('[get-channels] An unexpected error occurred:', error.message);
     // This catches errors like failed req.json() or other unexpected issues
     return new Response(JSON.stringify({ error: 'An internal server error occurred while processing the request.' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

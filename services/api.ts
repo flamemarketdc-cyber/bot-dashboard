@@ -47,12 +47,12 @@ export const apiService = {
        throw new Error('Authentication error: User is not logged in.');
      }
 
-    const { data, error } = await supabase.functions.invoke('get-discord-channels', {
+    const { data, error } = await supabase.functions.invoke('get-channels', {
         body: { guildId },
     });
     
     if (error) {
-      console.error(`Error invoking get-discord-channels function for guild ${guildId}:`, error.message, error.context);
+      console.error(`Error invoking get-channels function for guild ${guildId}:`, error.message, error.context);
       // Try to get a more specific error from the function's response if available
       const functionError = error.context?.data?.error || error.context?.reason?.message;
       const reason = functionError || error.message;

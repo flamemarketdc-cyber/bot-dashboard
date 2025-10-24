@@ -5,13 +5,14 @@ import Header from './Header';
 import Spinner from './Spinner';
 import Select from './Select';
 import Sidebar from './Sidebar';
+import DashboardOverview from './DashboardOverview';
 import GeneralSettings from './settings/GeneralSettings';
 import TicketSettings from './settings/TicketSettings';
 import AutoModSettings from './settings/AutoModSettings';
 import ChatbotSettings from './settings/ChatbotSettings';
 import GiveawaySettings from './settings/GiveawaySettings';
 import ClaimTimeSettings from './settings/ClaimTimeSettings';
-import { DiscordLogoIcon, ErrorIcon, CogIcon, TicketIcon, ShieldCheckIcon, ChatBubbleIcon, GiftIcon, ClockIcon } from './Icons';
+import { DiscordLogoIcon, ErrorIcon } from './Icons';
 
 interface DashboardProps {
   user: User;
@@ -25,7 +26,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
   const [loadingGuilds, setLoadingGuilds] = useState<boolean>(true);
   const [loadingData, setLoadingData] = useState<boolean>(false);
-  const [activeModule, setActiveModule] = useState<string>('dashboard');
+  const [currentPath, setCurrentPath] = useState(window.location.hash || '#/dashboard');
   const [error, setError] = useState<string | null>(null);
   
   // States for dashboard overview
@@ -35,6 +36,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   const [chatbotEnabled, setChatbotEnabled] = useState<boolean>(false);
   const [giveawaysConfigured, setGiveawaysConfigured] = useState<boolean>(false);
   const [claimTimeEnabled, setClaimTimeEnabled] = useState<boolean>(false);
+
+  // Router effect
+  useEffect(() => {
+    const handleHashChange = () => {
+        setCurrentPath(window.location.hash || '#/dashboard');
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    // Set initial path
+    handleHashChange();
+    return () => {
+        window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
   useEffect(() => {
     setError(null);
@@ -58,7 +72,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   useEffect(() => {
     if (selectedGuild) {
       setChannels([]);
-      setActiveModule('dashboard');
+      // Reset to dashboard page on guild change
+      window.location.hash = '#/dashboard';
       
       const fetchAllSettings = async () => {
           setLoadingData(true);
@@ -152,54 +167,35 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
     setSelectedGuild(guild);
   };
   
-  const StatCard: React.FC<{title: string; value: string; status?: boolean; icon: React.ReactNode}> = ({title, value, status, icon}) => (
-      <div className="bg-slate-900/50 backdrop-blur-sm p-6 rounded-lg border border-slate-700/60 flex items-start gap-4 transition-all duration-300 hover:bg-slate-800/60 hover:border-red-500/50 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-900/20">
-        <div className="bg-slate-900 p-3 rounded-full border border-slate-700">{icon}</div>
-        <div>
-            <p className="text-slate-400 text-sm font-medium">{title}</p>
-            <p className="text-slate-100 text-lg font-bold">{value}</p>
-        </div>
-        {status !== undefined && (
-            <span className={`ml-auto text-xs font-semibold px-2.5 py-1 rounded-full ${status ? 'bg-green-500/20 text-green-300' : 'bg-slate-600/50 text-slate-300'}`}>
-                {status ? 'Enabled' : 'Disabled'}
-            </span>
-        )}
-      </div>
-  );
-
   const renderContent = () => {
     if (loadingData) {
         return <div className="flex items-center justify-center h-full"><Spinner /></div>;
     }
 
-    switch (activeModule) {
-      case 'dashboard':
-        return <div className="p-6 md:p-8 animate-fade-in-up">
-            <h2 className="text-4xl font-black red-gradient-text mb-2">Mission Control</h2>
-            <p className="text-slate-400 mb-8">High-level overview of the bot's status in <span className="font-semibold text-red-400">{selectedGuild?.name}</span>.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatCard title="Bot Prefix" value={`'${prefix}'`} icon={<CogIcon />} />
-                <StatCard title="Ticket System" value={ticketEnabled ? 'Active' : 'Not Set Up'} status={ticketEnabled} icon={<TicketIcon />} />
-                <StatCard title="Auto Moderation" value={autoModEnabled ? 'Active' : 'Inactive'} status={autoModEnabled} icon={<ShieldCheckIcon />} />
-                <StatCard title="Chatbot" value={chatbotEnabled ? 'Active' : 'Inactive'} status={chatbotEnabled} icon={<ChatBubbleIcon />} />
-                <StatCard title="Giveaways" value={giveawaysConfigured ? 'Configured' : 'Not Set Up'} status={giveawaysConfigured} icon={<GiftIcon />} />
-                <StatCard title="Giveaway Claim Time" value={claimTimeEnabled ? 'Active' : 'Inactive'} status={claimTimeEnabled} icon={<ClockIcon />} />
-            </div>
-        </div>;
-      case 'general':
+    switch (currentPath) {
+      case '#/general':
         return <GeneralSettings guild={selectedGuild!} channels={channels} />;
-      case 'tickets':
+      case '#/tickets':
         return <TicketSettings guild={selectedGuild!} channels={channels} />;
-      case 'automod':
+      case '#/automod':
         return <AutoModSettings guild={selectedGuild!} />;
-      case 'chatbot':
+      case '#/chatbot':
         return <ChatbotSettings guild={selectedGuild!} channels={channels} />;
-      case 'giveaways':
+      case '#/giveaways':
         return <GiveawaySettings guild={selectedGuild!} />;
-      case 'claimtime':
+      case '#/claimtime':
         return <ClaimTimeSettings guild={selectedGuild!} />;
+      case '#/dashboard':
       default:
-        return <div>Select a module</div>;
+        return <DashboardOverview
+            selectedGuild={selectedGuild!}
+            prefix={prefix}
+            ticketEnabled={ticketEnabled}
+            autoModEnabled={autoModEnabled}
+            chatbotEnabled={chatbotEnabled}
+            giveawaysConfigured={giveawaysConfigured}
+            claimTimeEnabled={claimTimeEnabled}
+        />;
     }
   };
   
@@ -247,7 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
 
   return (
     <div className="w-screen h-screen flex">
-      <Sidebar activeModule={activeModule} setActiveModule={setActiveModule} />
+      <Sidebar />
       <div className="flex-grow flex flex-col overflow-hidden">
         <Header user={user} onLogout={onLogout} selectedGuild={selectedGuild} />
         <main className="flex-grow overflow-y-auto">
