@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HomeIcon, CogIcon, TicketIcon, ShieldCheckIcon, ChatBubbleIcon, GiftIcon, ClockIcon } from './Icons';
 
 interface SidebarProps {
@@ -10,22 +10,26 @@ const NavItem: React.FC<{
     icon: React.ReactNode;
     label: string;
     isActive: boolean;
+    isExpanded: boolean;
     onClick: () => void;
-}> = ({ icon, label, isActive, onClick }) => (
+}> = ({ icon, label, isActive, isExpanded, onClick }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+        className={`w-full flex items-center gap-4 px-4 h-12 rounded-lg text-left transition-all duration-200 relative ${
             isActive 
-                ? 'bg-indigo-600 text-white font-semibold' 
-                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
+                ? 'bg-red-900/40 text-white font-semibold' 
+                : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
         }`}
     >
+        {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 red-gradient-bg rounded-r-full"></div>}
         {icon}
-        <span>{label}</span>
+        <span className={`transition-opacity duration-100 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>{label}</span>
     </button>
 );
 
 const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: <HomeIcon /> },
         { id: 'general', label: 'General Settings', icon: <CogIcon /> },
@@ -37,7 +41,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
     ];
 
     return (
-        <aside className="w-64 bg-gray-800/50 shadow-lg rounded-xl border border-gray-700/30 p-4 flex-shrink-0">
+        <aside 
+            className={`transition-all duration-300 ease-in-out bg-slate-900/30 backdrop-blur-sm border-r border-slate-700/60 p-4 flex-shrink-0 flex flex-col ${isExpanded ? 'w-64' : 'w-20'}`}
+            onMouseEnter={() => setIsExpanded(true)}
+            onMouseLeave={() => setIsExpanded(false)}
+        >
+            <div className="h-16 flex items-center justify-center font-black text-2xl red-gradient-text mb-4">
+                {isExpanded ? "COMMAND" : "C"}
+            </div>
             <nav className="space-y-2">
                 {navItems.map(item => (
                     <NavItem 
@@ -45,6 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
                         icon={item.icon}
                         label={item.label}
                         isActive={activeModule === item.id}
+                        isExpanded={isExpanded}
                         onClick={() => setActiveModule(item.id)}
                     />
                 ))}

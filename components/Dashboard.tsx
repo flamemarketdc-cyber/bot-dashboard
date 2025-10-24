@@ -11,7 +11,7 @@ import AutoModSettings from './settings/AutoModSettings';
 import ChatbotSettings from './settings/ChatbotSettings';
 import GiveawaySettings from './settings/GiveawaySettings';
 import ClaimTimeSettings from './settings/ClaimTimeSettings';
-import { DiscordLogoIcon, ErrorIcon, CogIcon, TicketIcon, ShieldCheckIcon, ChatBubbleIcon } from './Icons';
+import { DiscordLogoIcon, ErrorIcon, CogIcon, TicketIcon, ShieldCheckIcon, ChatBubbleIcon, GiftIcon, ClockIcon } from './Icons';
 
 interface DashboardProps {
   user: User;
@@ -29,9 +29,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   
   // States for dashboard overview
   const [prefix, setPrefix] = useState<string>(',');
-  const [ticketChannel, setTicketChannel] = useState<string | null>(null);
+  const [ticketEnabled, setTicketEnabled] = useState<boolean>(false);
   const [autoModEnabled, setAutoModEnabled] = useState<boolean>(false);
   const [chatbotEnabled, setChatbotEnabled] = useState<boolean>(false);
+  const [giveawaysConfigured, setGiveawaysConfigured] = useState<boolean>(false);
+  const [claimTimeEnabled, setClaimTimeEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     setError(null);
@@ -55,24 +57,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       
       const fetchAllSettings = async () => {
           try {
-              const [ch, gen, tkt, am, cb] = await Promise.all([
+              const [ch, gen, tkt, am, cb, gv, ct] = await Promise.all([
                   apiService.getChannels(selectedGuild.id),
                   apiService.getGeneralSettings(selectedGuild.id),
                   apiService.getTicketSettings(selectedGuild.id),
                   apiService.getAutoModSettings(selectedGuild.id),
                   apiService.getChatbotSettings(selectedGuild.id),
+                  apiService.getGiveawaySettings(selectedGuild.id),
+                  apiService.getClaimTimeSettings(selectedGuild.id),
               ]);
               setChannels(ch);
               setPrefix(gen.prefix);
-              setTicketChannel(tkt.panelChannelId);
+              setTicketEnabled(!!tkt.panelChannelId);
               setAutoModEnabled(am.enabled);
               setChatbotEnabled(cb.enabled);
+              setGiveawaysConfigured(gv.managerRoleIds.length > 0);
+              setClaimTimeEnabled(ct.enabled);
           } catch (err: any) {
-              console.warn(`Could not fetch all data for ${selectedGuild.name}. Some features may be limited.`, err);
-              // Allow access even if some settings fail
-              if(err.message.includes("channels")) {
-                setError("Could not fetch channels. Settings pages will have empty channel selectors, but will still be functional.");
-              }
+              setError("Could not fetch all settings for this server. Some modules may be unavailable.");
           } finally {
               setLoadingChannels(false);
           }
@@ -87,15 +89,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     setSelectedGuild(guild);
   };
   
-  const OverviewCard: React.FC<{title: string; value: string; status?: boolean; icon: React.ReactNode}> = ({title, value, status, icon}) => (
-      <div className="bg-gray-800/50 p-6 rounded-lg border border-gray-700/50 flex items-start gap-4">
-        <div className="bg-gray-900 p-3 rounded-full">{icon}</div>
+  const StatCard: React.FC<{title: string; value: string; status?: boolean; icon: React.ReactNode}> = ({title, value, status, icon}) => (
+      <div className="bg-slate-900/50 backdrop-blur-sm p-6 rounded-lg border border-slate-700/60 flex items-start gap-4 transition-all duration-300 hover:bg-slate-800/60 hover:border-red-500/50 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-900/20">
+        <div className="bg-slate-900 p-3 rounded-full border border-slate-700">{icon}</div>
         <div>
-            <p className="text-gray-400 text-sm font-medium">{title}</p>
-            <p className="text-white text-lg font-bold">{value}</p>
+            <p className="text-slate-400 text-sm font-medium">{title}</p>
+            <p className="text-slate-100 text-lg font-bold">{value}</p>
         </div>
         {status !== undefined && (
-            <span className={`ml-auto text-xs font-semibold px-2 py-1 rounded-full ${status ? 'bg-green-500/20 text-green-300' : 'bg-gray-600/50 text-gray-300'}`}>
+            <span className={`ml-auto text-xs font-semibold px-2.5 py-1 rounded-full ${status ? 'bg-green-500/20 text-green-300' : 'bg-slate-600/50 text-slate-300'}`}>
                 {status ? 'Enabled' : 'Disabled'}
             </span>
         )}
@@ -107,24 +109,26 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         return <div className="flex items-center justify-center h-full"><Spinner /></div>
     }
 
-    if (error && activeModule !== 'dashboard') {
-        return <div className="p-6 md:p-8 text-center text-red-300">
+    if (error && !loadingChannels) {
+        return <div className="p-6 md:p-8 text-center text-red-300 animate-fade-in-up">
             <ErrorIcon className="h-12 w-12 mx-auto mb-4 text-red-400" />
             <h3 className="text-xl font-semibold mb-2">An Error Occurred</h3>
-            <p>{error}</p>
+            <p className="text-slate-400">{error}</p>
         </div>
     }
 
     switch (activeModule) {
       case 'dashboard':
-        return <div className="p-6 md:p-8">
-            <h2 className="text-3xl font-bold text-white mb-2">Dashboard Overview</h2>
-            <p className="text-gray-400 mb-6">A quick look at the bot's status in <span className="font-semibold text-indigo-400">{selectedGuild?.name}</span>.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <OverviewCard title="Bot Prefix" value={`'${prefix}'`} icon={<CogIcon />} />
-                <OverviewCard title="Ticket System" value={ticketChannel ? `#${channels.find(c=>c.id === ticketChannel)?.name}` : "Not Set"} status={!!ticketChannel} icon={<TicketIcon />} />
-                <OverviewCard title="Auto Moderation" value={autoModEnabled ? 'Active' : 'Inactive'} status={autoModEnabled} icon={<ShieldCheckIcon />} />
-                <OverviewCard title="Chatbot" value={chatbotEnabled ? 'Active' : 'Inactive'} status={chatbotEnabled} icon={<ChatBubbleIcon />} />
+        return <div className="p-6 md:p-8 animate-fade-in-up">
+            <h2 className="text-4xl font-black red-gradient-text mb-2">Mission Control</h2>
+            <p className="text-slate-400 mb-8">High-level overview of the bot's status in <span className="font-semibold text-red-400">{selectedGuild?.name}</span>.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <StatCard title="Bot Prefix" value={`'${prefix}'`} icon={<CogIcon />} />
+                <StatCard title="Ticket System" value={ticketEnabled ? 'Active' : 'Not Set Up'} status={ticketEnabled} icon={<TicketIcon />} />
+                <StatCard title="Auto Moderation" value={autoModEnabled ? 'Active' : 'Inactive'} status={autoModEnabled} icon={<ShieldCheckIcon />} />
+                <StatCard title="Chatbot" value={chatbotEnabled ? 'Active' : 'Inactive'} status={chatbotEnabled} icon={<ChatBubbleIcon />} />
+                <StatCard title="Giveaways" value={giveawaysConfigured ? 'Configured' : 'Not Set Up'} status={giveawaysConfigured} icon={<GiftIcon />} />
+                <StatCard title="Claim Time" value={claimTimeEnabled ? 'Active' : 'Inactive'} status={claimTimeEnabled} icon={<ClockIcon />} />
             </div>
         </div>;
       case 'general':
@@ -144,13 +148,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     }
   };
   
-  if (error && !selectedGuild) {
+  if (error && guilds.length === 0) {
     return (
-      <div className="w-full max-w-lg mx-auto">
+       <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
         <Header user={user} onLogout={onLogout} />
-        <div className="bg-gray-800 shadow-2xl rounded-xl p-8 border border-red-700/50 text-center">
+        <div className="w-full max-w-lg bg-slate-900/50 backdrop-blur-sm shadow-2xl rounded-xl p-8 border border-red-700/60 text-center">
             <ErrorIcon className="h-16 w-16 text-red-400 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-white mb-4">An Error Occurred</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">Failed to Fetch Servers</h2>
             <p className="text-red-300">{error}</p>
         </div>
       </div>
@@ -159,12 +163,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
   if (!selectedGuild) {
     return (
-      <div className="w-full max-w-lg mx-auto">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
           <Header user={user} onLogout={onLogout} />
-           <div className="bg-gray-800 shadow-2xl rounded-xl p-8 border border-gray-700/50 text-center">
-            <DiscordLogoIcon className="h-16 w-16 text-indigo-400 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-white mb-4">Select a Server</h2>
-            <p className="text-gray-400 mb-6">
+           <div className="w-full max-w-lg bg-slate-900/50 backdrop-blur-sm shadow-2xl shadow-red-900/10 rounded-xl p-8 border border-slate-700/60 text-center animate-fade-in-up">
+            <DiscordLogoIcon className="h-16 w-16 text-red-500 mx-auto mb-6" />
+            <h2 className="text-3xl font-bold text-white mb-4">Select a Server</h2>
+            <p className="text-slate-400 mb-6">
                 {loadingGuilds
                     ? 'Fetching your servers...'
                     : guilds.length > 0
@@ -187,11 +191,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto flex flex-col h-screen p-4">
-      <Header user={user} onLogout={onLogout} selectedGuild={selectedGuild} />
-      <div className="flex-grow flex gap-6 overflow-hidden">
-        <Sidebar activeModule={activeModule} setActiveModule={setActiveModule} />
-        <main className="flex-grow bg-gray-800 shadow-2xl rounded-xl border border-gray-700/50 overflow-y-auto">
+    <div className="w-screen h-screen flex">
+      <Sidebar activeModule={activeModule} setActiveModule={setActiveModule} />
+      <div className="flex-grow flex flex-col overflow-hidden">
+        <Header user={user} onLogout={onLogout} selectedGuild={selectedGuild} />
+        <main className="flex-grow overflow-y-auto">
           {renderContent()}
         </main>
       </div>

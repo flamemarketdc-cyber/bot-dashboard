@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Guild, Channel, GeneralSettings as Settings, ApiResponse } from '../../types';
 import { apiService } from '../../services/api';
 import Select from '../Select';
 import Spinner from '../Spinner';
-import { SuccessIcon, ErrorIcon } from '../Icons';
+import SettingsLayout from './SettingsLayout';
+import SettingsCard from './SettingsCard';
 
 interface GeneralSettingsProps {
   guild: Guild;
@@ -52,68 +53,54 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
   if (isLoading || !settings) {
     return <div className="flex items-center justify-center h-full"><Spinner size="lg" /></div>;
   }
+  
+  const textChannels = channels.filter(c => c.type === 0);
 
   return (
-    <div className="p-6 md:p-8">
-      <h2 className="text-2xl font-bold text-white mb-1">General Settings</h2>
-      <p className="text-gray-400 mb-6">Configure basic settings for your bot.</p>
-      
-      <div className="space-y-6 max-w-2xl">
-        <div>
-          <label htmlFor="prefix" className="block text-sm font-medium text-gray-300 mb-2">
-            Bot Prefix
-          </label>
-          <input
-            type="text"
-            id="prefix"
-            name="prefix"
-            value={settings.prefix}
-            onChange={handleInputChange}
-            className="w-full max-w-xs bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+    <SettingsLayout
+      title="General Settings"
+      description="Configure the core behavior and channel settings for the bot in your server."
+      isSaving={isSaving}
+      onSave={handleSave}
+      apiResponse={apiResponse}
+    >
+      <SettingsCard title="Bot Prefix">
+        <label htmlFor="prefix" className="block text-sm font-medium text-slate-300 mb-2">
+          The character the bot responds to.
+        </label>
+        <input
+          type="text"
+          id="prefix"
+          name="prefix"
+          value={settings.prefix}
+          onChange={handleInputChange}
+          className="w-full max-w-xs bg-slate-900 border border-slate-700/80 rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+        />
+      </SettingsCard>
+
+      <SettingsCard title="Channel Configuration">
+        <div className="space-y-4">
+          <Select
+            label="Welcome Channel"
+            name="welcomeChannelId"
+            value={settings.welcomeChannelId ?? ""}
+            onChange={handleSelectChange}
+            options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
+            placeholder="Select a channel for greetings"
+            description="The bot will greet new members in this channel."
+          />
+          <Select
+            label="Log Channel"
+            name="logChannelId"
+            value={settings.logChannelId ?? ""}
+            onChange={handleSelectChange}
+            options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
+            placeholder="Select a channel for logs"
+            description="Important bot and server events will be logged here."
           />
         </div>
-
-        <Select
-          label="Welcome Channel"
-          name="welcomeChannelId"
-          value={settings.welcomeChannelId ?? ""}
-          onChange={handleSelectChange}
-          options={channels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-          placeholder="Select a channel"
-        />
-        
-        <Select
-          label="Log Channel"
-          name="logChannelId"
-          value={settings.logChannelId ?? ""}
-          onChange={handleSelectChange}
-          options={channels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-          placeholder="Select a channel"
-        />
-        
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-700">
-            {apiResponse ? (
-                 <div className={`flex items-center gap-2 p-2 rounded-md text-sm ${
-                    apiResponse.success 
-                    ? 'bg-green-900/50 text-green-300' 
-                    : 'bg-red-900/50 text-red-300'
-                 }`}>
-                    {apiResponse.success ? <SuccessIcon /> : <ErrorIcon />}
-                    <span>{apiResponse.message}</span>
-                 </div>
-            ) : <div />}
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="w-full sm:w-auto ml-auto bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
-            >
-              {isSaving && <Spinner size="sm" />}
-              <span className="ml-2">{isSaving ? 'Saving...' : 'Save Changes'}</span>
-            </button>
-        </div>
-
-      </div>
-    </div>
+      </SettingsCard>
+    </SettingsLayout>
   );
 };
 

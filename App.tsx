@@ -11,11 +11,9 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Supabase provides a listener to handle auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsLoading(true);
       if (event === 'SIGNED_IN' && session) {
-        // Extract user data from the session
         const profile = session.user.user_metadata;
         setUser({
           id: session.user.id,
@@ -28,7 +26,6 @@ const App: React.FC = () => {
       setIsLoading(false);
     });
 
-    // Check the initial session
     const checkInitialSession = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
@@ -44,7 +41,6 @@ const App: React.FC = () => {
 
     checkInitialSession();
 
-    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
@@ -52,11 +48,10 @@ const App: React.FC = () => {
 
   const handleLogin = async () => {
     setError(null);
-    console.log("Initiating Discord login with 'identify guilds email' scopes...");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: {
-        scopes: 'identify guilds email', // Request identify, guilds, and email scopes
+        scopes: 'identify guilds email',
       },
     });
     if (error) {
@@ -72,18 +67,20 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center">
         <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen">
       {user ? (
         <Dashboard user={user} onLogout={handleLogout} />
       ) : (
-        <Login onLogin={handleLogin} error={error} />
+        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+            <Login onLogin={handleLogin} error={error} />
+        </div>
       )}
     </div>
   );

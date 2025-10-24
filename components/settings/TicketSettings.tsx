@@ -3,7 +3,8 @@ import type { Guild, Channel, TicketSettings as Settings, ApiResponse } from '..
 import { apiService } from '../../services/api';
 import Select from '../Select';
 import Spinner from '../Spinner';
-import { SuccessIcon, ErrorIcon } from '../Icons';
+import SettingsLayout from './SettingsLayout';
+import SettingsCard from './SettingsCard';
 
 interface TicketSettingsProps {
   guild: Guild;
@@ -53,72 +54,57 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
     return <div className="flex items-center justify-center h-full"><Spinner size="lg" /></div>;
   }
 
-  // Filter channels for different select inputs
   const textChannels = channels.filter(c => c.type === 0);
   const categoryChannels = channels.filter(c => c.type === 4);
 
   return (
-    <div className="p-6 md:p-8">
-      <h2 className="text-2xl font-bold text-white mb-1">Ticket System</h2>
-      <p className="text-gray-400 mb-6">Set up the ticketing system for your server.</p>
-      
-      <div className="space-y-6 max-w-2xl">
-        <Select
-          label="Ticket Panel Channel"
-          name="panelChannelId"
-          value={settings.panelChannelId ?? ""}
-          onChange={handleSelectChange}
-          options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-          placeholder="Channel to create tickets in"
-        />
-        
-        <Select
-          label="Ticket Category"
-          name="categoryId"
-          value={settings.categoryId ?? ""}
-          onChange={handleSelectChange}
-          options={categoryChannels.map(c => ({ value: c.id, label: `📁 ${c.name}` }))}
-          placeholder="Category to create new tickets under"
-        />
-        
-        <div>
-          <label htmlFor="supportRoleIds" className="block text-sm font-medium text-gray-300 mb-2">
-            Support Role IDs
-          </label>
-          <input
-            type="text"
-            id="supportRoleIds"
-            name="supportRoleIds"
-            value={settings.supportRoleIds}
-            onChange={handleInputChange}
-            placeholder="Enter role IDs, separated by commas"
-            className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+    <SettingsLayout
+      title="Ticket System"
+      description="Set up and manage the support ticket system for your server."
+      isSaving={isSaving}
+      onSave={handleSave}
+      apiResponse={apiResponse}
+    >
+      <SettingsCard title="Channel Setup">
+        <div className="space-y-4">
+          <Select
+            label="Ticket Panel Channel"
+            name="panelChannelId"
+            value={settings.panelChannelId ?? ""}
+            onChange={handleSelectChange}
+            options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
+            placeholder="Select a channel"
+            description="The channel where users can create new tickets."
           />
-           <p className="text-xs text-gray-500 mt-1">Separate multiple role IDs with a comma (e.g., 87654321,12345678).</p>
+          <Select
+            label="Ticket Category"
+            name="categoryId"
+            value={settings.categoryId ?? ""}
+            onChange={handleSelectChange}
+            options={categoryChannels.map(c => ({ value: c.id, label: `📁 ${c.name}` }))}
+            placeholder="Select a category"
+            description="The category where new ticket channels will be created."
+          />
         </div>
+      </SettingsCard>
         
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-700">
-            {apiResponse ? (
-                 <div className={`flex items-center gap-2 p-2 rounded-md text-sm ${
-                    apiResponse.success 
-                    ? 'bg-green-900/50 text-green-300' 
-                    : 'bg-red-900/50 text-red-300'
-                 }`}>
-                    {apiResponse.success ? <SuccessIcon /> : <ErrorIcon />}
-                    <span>{apiResponse.message}</span>
-                 </div>
-            ) : <div />}
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="w-full sm:w-auto ml-auto bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center transition-all duration-200"
-            >
-              {isSaving && <Spinner size="sm" />}
-              <span className="ml-2">{isSaving ? 'Saving...' : 'Save Changes'}</span>
-            </button>
-        </div>
-      </div>
-    </div>
+      <SettingsCard title="Permissions">
+        <label htmlFor="supportRoleIds" className="block text-sm font-medium text-slate-300 mb-2">
+          Support Role IDs
+        </label>
+        <p className="text-xs text-slate-400 mb-2">Users with these roles can view and respond to tickets.</p>
+        <input
+          type="text"
+          id="supportRoleIds"
+          name="supportRoleIds"
+          value={settings.supportRoleIds}
+          onChange={handleInputChange}
+          placeholder="Enter role IDs, separated by commas"
+          className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+        />
+        <p className="text-xs text-slate-500 mt-1">Separate multiple role IDs with a comma (e.g., 87654321,12345678).</p>
+      </SettingsCard>
+    </SettingsLayout>
   );
 };
 

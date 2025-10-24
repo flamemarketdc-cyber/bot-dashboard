@@ -2,28 +2,13 @@ import React, { useState, useEffect } from 'react';
 import type { Guild, AutoModSettings as Settings, ApiResponse } from '../../types';
 import { apiService } from '../../services/api';
 import Spinner from '../Spinner';
-import { SuccessIcon, ErrorIcon } from '../Icons';
+import SettingsLayout from './SettingsLayout';
+import SettingsCard from './SettingsCard';
+import Toggle from '../Toggle';
 
 interface AutoModSettingsProps {
   guild: Guild;
 }
-
-const SettingsCard: React.FC<{children: React.ReactNode}> = ({ children }) => (
-    <div className="bg-gray-900/50 border border-gray-700/50 rounded-lg p-6">{children}</div>
-);
-
-const Toggle: React.FC<{checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; label: string; description: string;}> = ({checked, onChange, label, description}) => (
-    <div className="flex items-center justify-between">
-        <div>
-            <h4 className="text-md font-semibold text-gray-200">{label}</h4>
-            <p className="text-sm text-gray-400">{description}</p>
-        </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" checked={checked} onChange={onChange} className="sr-only peer" />
-            <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-        </label>
-    </div>
-);
 
 const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -69,11 +54,13 @@ const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
   }
 
   return (
-    <div className="p-6 md:p-8">
-      <h2 className="text-2xl font-bold text-white mb-1">Auto Moderation</h2>
-      <p className="text-gray-400 mb-6">Automatically moderate your server to keep it clean.</p>
-      
-      <div className="space-y-6 max-w-2xl">
+    <SettingsLayout
+      title="Auto Moderation"
+      description="Automatically moderate your server to keep it safe and clean."
+      isSaving={isSaving}
+      onSave={handleSave}
+      apiResponse={apiResponse}
+    >
         <SettingsCard>
             <Toggle 
                 label="Enable Auto Moderation"
@@ -83,7 +70,7 @@ const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
             />
         </SettingsCard>
 
-        <SettingsCard>
+        <SettingsCard title="Filters">
             <div className="space-y-4">
                 <Toggle 
                     label="Block Bad Words"
@@ -91,7 +78,7 @@ const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
                     checked={settings.blockBadWords}
                     onChange={(e) => handleToggle(e, 'blockBadWords')}
                 />
-                <hr className="border-gray-700" />
+                <hr className="border-slate-700/60" />
                  <Toggle 
                     label="Anti-Spam"
                     description="Prevent users from spamming messages or mentions."
@@ -101,11 +88,11 @@ const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
             </div>
         </SettingsCard>
         
-        <SettingsCard>
-            <label htmlFor="whitelistedRoles" className="block text-md font-semibold text-gray-200 mb-2">
+        <SettingsCard title="Whitelist">
+            <label htmlFor="whitelistedRoles" className="block text-sm font-medium text-slate-300 mb-2">
                 Whitelisted Role IDs
             </label>
-            <p className="text-sm text-gray-400 mb-3">Users with these roles will bypass auto-moderation filters.</p>
+            <p className="text-xs text-slate-400 mb-3">Users with these roles will bypass all auto-moderation filters.</p>
             <input
                 type="text"
                 id="whitelistedRoles"
@@ -113,31 +100,11 @@ const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
                 value={settings.whitelistedRoles}
                 onChange={handleInputChange}
                 placeholder="Enter role IDs, separated by commas"
-                className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-200 focus:ring-2 focus:ring-indigo-500 transition"
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
             />
-            <p className="text-xs text-gray-500 mt-1">Separate multiple role IDs with a comma.</p>
+            <p className="text-xs text-slate-500 mt-1">Separate multiple role IDs with a comma.</p>
         </SettingsCard>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-4">
-            {apiResponse && (
-                 <div className={`flex items-center gap-2 p-2 rounded-md text-sm ${
-                    apiResponse.success ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'
-                 }`}>
-                    {apiResponse.success ? <SuccessIcon /> : <ErrorIcon />}
-                    <span>{apiResponse.message}</span>
-                 </div>
-            )}
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center transition-all"
-            >
-              {isSaving ? <Spinner size="sm" /> : <span className="ml-2">{isSaving ? 'Saving...' : 'Save Changes'}</span>}
-            </button>
-        </div>
-
-      </div>
-    </div>
+    </SettingsLayout>
   );
 };
 
