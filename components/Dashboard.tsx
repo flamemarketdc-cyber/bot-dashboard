@@ -24,7 +24,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
   const [loadingGuilds, setLoadingGuilds] = useState<boolean>(true);
-  const [loadingChannels, setLoadingChannels] = useState<boolean>(false);
+  const [loadingData, setLoadingData] = useState<boolean>(false);
   const [activeModule, setActiveModule] = useState<string>('dashboard');
   const [error, setError] = useState<string | null>(null);
   
@@ -61,7 +61,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
       setActiveModule('dashboard');
       
       const fetchAllSettings = async () => {
-          setLoadingChannels(true);
+          setLoadingData(true);
           setError(null);
           try {
               const results = await Promise.allSettled([
@@ -80,14 +80,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
               if (chRes.status === 'fulfilled') setChannels(chRes.value);
               else {
                   console.error("Failed to fetch channels:", chRes.reason);
-                  failedModules.push('Channels');
                   setChannels([]);
               }
 
               if (genRes.status === 'fulfilled') setPrefix(genRes.value.prefix);
               else {
                   console.error("Failed to fetch general settings:", genRes.reason);
-                  setPrefix(','); // set default
+                  setPrefix(',');
                   failedModules.push('General Settings');
               }
 
@@ -126,29 +125,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
                   failedModules.push('Giveaway Claim Time');
               }
 
-              if (failedModules.length > 0) {
-                  let finalError = '';
-                  // Handle the critical channel failure separately to show the detailed reason
-                  if (chRes.status === 'rejected') {
-                      const reason = chRes.reason?.message || 'The server returned an unknown error.';
-                      finalError += `CRITICAL: Could not fetch server channels. ${reason}. Most settings will be unavailable.`;
-                      
-                      const otherFailed = failedModules.filter(m => m !== 'Channels');
-                      if (otherFailed.length > 0) {
-                          finalError += ` Other failed modules: ${otherFailed.join(', ')}.`;
-                      }
-                  } else {
-                      // This case happens if channels succeeded but other things failed.
-                      finalError = `Could not fetch settings for: ${failedModules.join(', ')}. These modules may show default values.`;
-                  }
-                  setError(finalError);
+              let finalError = '';
+              if (chRes.status === 'rejected') {
+                  const reason = chRes.reason?.message || 'The server returned an unknown error.';
+                  finalError += `Failed to fetch server channels. ${reason}. Settings that require a channel list may be disabled.`;
               }
+              if (failedModules.length > 0) {
+                  finalError += ` Could not fetch settings for: ${failedModules.join(', ')}.`;
+              }
+              if(finalError) setError(finalError.trim());
 
-          } catch (err: any) { // This catch is for Promise.allSettled itself failing, which is very rare
+          } catch (err: any) {
               setError("A critical error occurred while fetching server data.");
               console.error("Critical fetch error:", err);
           } finally {
-              setLoadingChannels(false);
+              setLoadingData(false);
           }
       };
       
@@ -177,16 +168,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   );
 
   const renderContent = () => {
-    if (loadingChannels) {
-        return <div className="flex items-center justify-center h-full"><Spinner /></div>
-    }
-
-    if (error && !loadingChannels) {
-        return <div className="p-6 md:p-8 text-center text-red-300 animate-fade-in-up">
-            <ErrorIcon className="h-12 w-12 mx-auto mb-4 text-red-400" />
-            <h3 className="text-xl font-semibold mb-2">An Error Occurred</h3>
-            <p className="text-slate-400">{error}</p>
-        </div>
+    if (loadingData) {
+        return <div className="flex items-center justify-center h-full"><Spinner /></div>;
     }
 
     switch (activeModule) {
@@ -268,6 +251,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
       <div className="flex-grow flex flex-col overflow-hidden">
         <Header user={user} onLogout={onLogout} selectedGuild={selectedGuild} />
         <main className="flex-grow overflow-y-auto">
+          {error && !loadingData && (
+             <div className="p-4 mx-6 md:mx-8 mt-6 md:mt-8 bg-red-900/50 border border-red-700/80 rounded-lg animate-fade-in-up">
+                <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                        <ErrorIcon className="h-6 w-6 text-red-400" />
+                    </div>
+                    <div className="ml-3 flex-1">
+                        <h3 className="text-md font-semibold text-red-300">There was an issue loading server data</h3>
+                        <p className="text-sm text-slate-300 mt-1">{error}</p>
+                    </div>
+                </div>
+            </div>
+          )}
           {renderContent()}
         </main>
       </div>

@@ -55,6 +55,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
   }
   
   const textChannels = channels.filter(c => c.type === 0);
+  const noChannelsAvailable = channels.length === 0;
 
   return (
     <SettingsLayout
@@ -86,8 +87,9 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
             value={settings.welcomeChannelId ?? ""}
             onChange={handleSelectChange}
             options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-            placeholder="Select a channel for greetings"
+            placeholder={noChannelsAvailable ? "Could not load channels" : "Select a channel for greetings"}
             description="The bot will greet new members in this channel."
+            disabled={noChannelsAvailable}
           />
           <Select
             label="Log Channel"
@@ -95,8 +97,9 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
             value={settings.logChannelId ?? ""}
             onChange={handleSelectChange}
             options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-            placeholder="Select a channel for logs"
+            placeholder={noChannelsAvailable ? "Could not load channels" : "Select a channel for logs"}
             description="Important bot and server events will be logged here."
+            disabled={noChannelsAvailable}
           />
         </div>
       </SettingsCard>

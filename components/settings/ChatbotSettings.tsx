@@ -62,6 +62,7 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({ guild, channels }) =>
   }
   
   const textChannels = channels.filter(c => c.type === 0);
+  const noChannelsAvailable = channels.length === 0;
 
   return (
     <SettingsLayout
@@ -88,8 +89,9 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({ guild, channels }) =>
             value={settings.channelId ?? ""}
             onChange={handleSelectChange}
             options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-            placeholder="Select a channel for the bot"
+            placeholder={noChannelsAvailable ? "Could not load channels" : "Select a channel for the bot"}
             description="The bot will only respond to mentions in this channel."
+            disabled={noChannelsAvailable}
           />
           <div>
             <label htmlFor="persona" className="block text-sm font-medium text-slate-300 mb-2">

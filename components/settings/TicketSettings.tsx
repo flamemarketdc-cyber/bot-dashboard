@@ -56,6 +56,7 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
 
   const textChannels = channels.filter(c => c.type === 0);
   const categoryChannels = channels.filter(c => c.type === 4);
+  const noChannelsAvailable = channels.length === 0;
 
   return (
     <SettingsLayout
@@ -73,8 +74,9 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
             value={settings.panelChannelId ?? ""}
             onChange={handleSelectChange}
             options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-            placeholder="Select a channel"
+            placeholder={noChannelsAvailable ? "Could not load channels" : "Select a channel"}
             description="The channel where users can create new tickets."
+            disabled={noChannelsAvailable}
           />
           <Select
             label="Ticket Category"
@@ -82,8 +84,9 @@ const TicketSettings: React.FC<TicketSettingsProps> = ({ guild, channels }) => {
             value={settings.categoryId ?? ""}
             onChange={handleSelectChange}
             options={categoryChannels.map(c => ({ value: c.id, label: `📁 ${c.name}` }))}
-            placeholder="Select a category"
+            placeholder={noChannelsAvailable ? "Could not load categories" : "Select a category"}
             description="The category where new ticket channels will be created."
+            disabled={noChannelsAvailable}
           />
         </div>
       </SettingsCard>
