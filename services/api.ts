@@ -1,51 +1,60 @@
-import type { User, Guild, Channel, ApiResponse, GeneralSettings, TicketSettings } from '../types';
+import type { Guild, Channel, ApiResponse, GeneralSettings, TicketSettings } from '../types';
 import { supabase } from './supabaseClient';
 
-// --- MOCK DATA (Retained for Guilds/Channels as this requires a separate backend flow) ---
-const MOCK_GUILDS: Guild[] = [
-  { id: 'g1', name: '🚀 Project Nebula', icon: 'https://picsum.photos/id/10/128/128', owner: true, permissions: '2147483647' },
-  { id: 'g2', name: '🎮 Gamer\'s Paradise', icon: 'https://picsum.photos/id/22/128/128', owner: false, permissions: '104324673' },
-  { id: 'g3', name: '🎨 Art & Design Hub', icon: 'https://picsum.photos/id/35/128/128', owner: false, permissions: '8' },
-  { id: 'g4', name: '🎵 Music Corner', icon: 'https://picsum.photos/id/48/128/128', owner: true, permissions: '2147483647' },
-];
-
-const MOCK_CHANNELS: { [guildId: string]: Channel[] } = {
-  'g1': [
-    { id: 'c1-1', name: 'general', type: 0 },
-    { id: 'c1-2', name: 'announcements', type: 0 },
-    { id: 'c1-3', name: 'dev-logs', type: 0 },
-  ],
-  'g2': [
-    { id: 'c2-1', name: 'general-chat', type: 0 },
-    { id: 'c2-2', name: 'looking-for-group', type: 0 },
-    { id: 'c2-3', name: 'event-announcements', type: 0 },
-  ],
-  'g4': [
-    { id: 'c4-1', name: 'music-releases', type: 0 },
-    { id: 'c4-2', name: 'support-tickets', type: 0 },
-  ],
-};
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-export const mockApiService = {
-  // NOTE: In a real app, getGuilds and getChannels would make authenticated requests
-  // to the Discord API from a secure backend (e.g., a Supabase Edge Function).
-  // We keep them mocked here for simplicity.
+export const apiService = {
+  // NOTE: These functions now make authenticated requests to the Discord API
+  // via a secure backend (Supabase Edge Functions).
   getGuilds: async (): Promise<Guild[]> => {
-    console.log("Fetching guilds (mock)...");
-    await sleep(1200);
-    const MANAGE_GUILD = 0x20;
-    const manageableGuilds = MOCK_GUILDS.filter(g => g.owner || (parseInt(g.permissions) & MANAGE_GUILD) === MANAGE_GUILD);
-    return manageableGuilds;
+    console.log("Fetching guilds via Supabase Function...");
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.provider_token;
+
+    if (!accessToken) {
+      console.error('No Discord access token found in session.');
+      throw new Error('No Discord access token found.');
+    }
+    console.log('Discord access token found. Invoking function...');
+
+    const { data, error } = await supabase.functions.invoke('get-discord-guilds', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    console.log('Supabase function response:', { data, error });
+    
+    if (error) {
+      console.error("Error invoking get-discord-guilds function:", error.message);
+      throw new Error(`Failed to fetch servers from Discord. Function error: ${error.message}`);
+    }
+
+    if (!Array.isArray(data)) {
+        console.error("Data received from function is not an array:", data);
+        throw new Error("Unexpected response format from server.");
+    }
+
+    console.log(`Successfully fetched ${data.length} guilds.`);
+    return data;
   },
 
   getChannels: async (guildId: string): Promise<Channel[]> => {
-     console.log(`Fetching channels for guild ${guildId} (mock)...`);
-    await sleep(800);
-    const channels = MOCK_CHANNELS[guildId] || [];
-    const textChannels = channels.filter(c => c.type === 0);
-    return textChannels;
+     console.log(`Fetching channels for guild ${guildId} via Supabase Function...`);
+     const { data: { session } } = await supabase.auth.getSession();
+     const accessToken = session?.provider_token;
+ 
+     if (!accessToken) {
+       throw new Error('No Discord access token found.');
+     }
+
+    const { data, error } = await supabase.functions.invoke('get-discord-channels', {
+        body: { guildId },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    
+    if (error) {
+      console.error(`Error invoking get-discord-channels function for guild ${guildId}:`, error.message);
+      throw new Error("Failed to fetch channels from Discord.");
+    }
+    
+    return data;
   },
 
   // --- Bot Settings API (Now using Supabase) ---

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Guild, Channel, GeneralSettings as Settings, ApiResponse } from '../../types';
-import { mockApiService } from '../../services/api';
+import { apiService } from '../../services/api';
 import Select from '../Select';
 import Spinner from '../Spinner';
 import { SuccessIcon, ErrorIcon } from '../Icons';
@@ -18,7 +18,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
 
   useEffect(() => {
     setIsLoading(true);
-    mockApiService.getGeneralSettings(guild.id)
+    apiService.getGeneralSettings(guild.id)
       .then(setSettings)
       .catch(err => console.error(err))
       .finally(() => setIsLoading(false));
@@ -39,7 +39,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
       setIsSaving(true);
       setApiResponse(null);
       try {
-          const response = await mockApiService.saveGeneralSettings(guild.id, settings);
+          const response = await apiService.saveGeneralSettings(guild.id, settings);
           setApiResponse(response);
       } catch (error: any) {
           setApiResponse({ success: false, message: 'An unexpected error occurred.' });
