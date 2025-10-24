@@ -120,11 +120,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               }
 
               if (failedModules.length > 0) {
-                  if (failedModules.includes('Channels')) {
-                      setError(`CRITICAL: Could not fetch server channels. Most settings will be unavailable. Other failed modules: ${failedModules.filter(m => m !== 'Channels').join(', ')}`);
+                  let finalError = '';
+                  // Handle the critical channel failure separately to show the detailed reason
+                  if (chRes.status === 'rejected') {
+                      const reason = chRes.reason?.message || 'The server returned an unknown error.';
+                      finalError += `CRITICAL: Could not fetch server channels. Reason: ${reason}. Most settings will be unavailable.`;
+                      
+                      const otherFailed = failedModules.filter(m => m !== 'Channels');
+                      if (otherFailed.length > 0) {
+                          finalError += ` Other failed modules: ${otherFailed.join(', ')}.`;
+                      }
                   } else {
-                      setError(`Could not fetch settings for: ${failedModules.join(', ')}. These modules may show default values.`);
+                      // This case happens if channels succeeded but other things failed.
+                      finalError = `Could not fetch settings for: ${failedModules.join(', ')}. These modules may show default values.`;
                   }
+                  setError(finalError);
               }
 
           } catch (err: any) { // This catch is for Promise.allSettled itself failing, which is very rare

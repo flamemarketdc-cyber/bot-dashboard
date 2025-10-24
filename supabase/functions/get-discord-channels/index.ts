@@ -38,9 +38,10 @@ serve(async (req: Request) => {
     })
 
     if (!response.ok) {
-      const errorBody = await response.text()
+      const errorBody = await response.text();
       console.error(`[get-discord-channels] Discord API error: ${response.status}`, errorBody)
-      throw new Error(`Discord API request failed with status: ${response.status}`)
+      // Throw an error that includes the specific reason from Discord's API
+      throw new Error(`Discord API Error (${response.status}): ${errorBody}`)
     }
 
     const channels = await response.json()
