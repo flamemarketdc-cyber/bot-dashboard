@@ -1,17 +1,21 @@
 // supabase/functions/get-discord-channels/index.ts
-import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
+
+// NOTE: Deno.serve is the modern, native, and recommended way to create an HTTP server in Deno.
+// We are using it directly to bypass a suspected bug in the older `std/http` compatibility layer
+// that was causing persistent CORS issues.
 
 const DISCORD_API_URL = 'https://discord.com/api/v10';
 
-// Define shared headers for CORS to ensure they are consistently applied
+// Define shared headers for CORS to ensure they are consistently applied.
+// This is critical for allowing browser-based clients to call the function.
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
-  // Handle CORS preflight request
+Deno.serve(async (req: Request) => {
+  // Handle CORS preflight request immediately.
+  // The browser sends this OPTIONS request first to check if the actual request is safe to send.
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -49,7 +53,7 @@ serve(async (req) => {
 
     const channels = await channelsResponse.json();
 
-    // Filter for text channels only (type 0) and categories (type 4)
+    // Filter for text channels (type 0) and categories (type 4)
     const textChannels = channels.filter((channel: any) => channel.type === 0 || channel.type === 4);
 
     return new Response(JSON.stringify(textChannels), {
@@ -70,3 +74,6 @@ serve(async (req) => {
     });
   }
 });
+
+// Fix: Add an empty export to treat this file as a module and prevent global scope pollution.
+export {};
