@@ -1,4 +1,14 @@
-import type { Guild, Channel, ApiResponse, GeneralSettings, TicketSettings } from '../types';
+import type { 
+    Guild, 
+    Channel, 
+    ApiResponse, 
+    GeneralSettings, 
+    TicketSettings,
+    AutoModSettings,
+    ChatbotSettings,
+    GiveawaySettings,
+    ClaimTimeSettings
+} from '../types';
 import { supabase } from './supabaseClient';
 
 export const apiService = {
@@ -7,7 +17,6 @@ export const apiService = {
   getGuilds: async (): Promise<Guild[]> => {
     console.log("Fetching guilds via Supabase Function...");
     
-    // Get session to find the Discord provider token
     const { data: { session } } = await supabase.auth.getSession();
     const accessToken = session?.provider_token;
 
@@ -18,7 +27,7 @@ export const apiService = {
     console.log('Discord access token found. Invoking function...');
 
     const { data, error } = await supabase.functions.invoke('get-guilds', {
-      body: { accessToken }, // Pass the token in the body to avoid header conflicts
+      body: { accessToken },
     });
 
     console.log('Supabase function response:', { data, error });
@@ -40,7 +49,6 @@ export const apiService = {
   getChannels: async (guildId: string): Promise<Channel[]> => {
      console.log(`Fetching channels for guild ${guildId} via Supabase Function...`);
      
-     // Get session to find the Discord provider token
      const { data: { session } } = await supabase.auth.getSession();
      const accessToken = session?.provider_token;
  
@@ -49,7 +57,7 @@ export const apiService = {
      }
 
     const { data, error } = await supabase.functions.invoke('get-discord-channels', {
-        body: { guildId, accessToken }, // Pass the token in the body
+        body: { guildId, accessToken },
     });
     
     if (error) {
@@ -63,28 +71,22 @@ export const apiService = {
   // --- Bot Settings API (Now using Supabase) ---
   
   getGeneralSettings: async (guildId: string): Promise<GeneralSettings> => {
-      console.log(`Fetching general settings for G:${guildId} from Supabase...`);
       const { data, error } = await supabase
         .from('guild_settings')
         .select('prefix, welcome_channel_id, log_channel_id')
         .eq('guild_id', guildId)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = 'Not Found'
-          console.error("Error fetching general settings:", error);
-          throw error;
-      }
+      if (error && error.code !== 'PGRST116') throw error;
       
       return {
-          prefix: data?.prefix ?? ',', // Default prefix
+          prefix: data?.prefix ?? ',',
           welcomeChannelId: data?.welcome_channel_id ?? null,
           logChannelId: data?.log_channel_id ?? null,
       };
   },
   
   saveGeneralSettings: async (guildId: string, settings: GeneralSettings): Promise<ApiResponse> => {
-      console.log(`Saving general settings for G:${guildId} to Supabase`, settings);
-      
       const { error } = await supabase.from('guild_settings').upsert({
           guild_id: guildId,
           prefix: settings.prefix,
@@ -96,21 +98,17 @@ export const apiService = {
           console.error("Error saving general settings:", error);
           return { success: false, message: "Failed to save settings." };
       }
-      return { success: true, message: "General settings saved successfully!" };
+      return { success: true, message: "General settings saved!" };
   },
 
   getTicketSettings: async (guildId: string): Promise<TicketSettings> => {
-      console.log(`Fetching ticket settings for G:${guildId} from Supabase...`);
       const { data, error } = await supabase
         .from('guild_settings')
         .select('panel_channel_id, category_id, support_role_ids')
         .eq('guild_id', guildId)
         .single();
     
-      if (error && error.code !== 'PGRST116') { // PGRST116 = 'Not Found'
-          console.error("Error fetching ticket settings:", error);
-          throw error;
-      }
+      if (error && error.code !== 'PGRST116') throw error;
 
       return {
           panelChannelId: data?.panel_channel_id ?? null,
@@ -120,8 +118,6 @@ export const apiService = {
   },
 
   saveTicketSettings: async (guildId: string, settings: TicketSettings): Promise<ApiResponse> => {
-      console.log(`Saving ticket settings for G:${guildId} to Supabase`, settings);
-      
       const { error } = await supabase.from('guild_settings').upsert({
           guild_id: guildId,
           panel_channel_id: settings.panelChannelId,
@@ -133,6 +129,132 @@ export const apiService = {
           console.error("Error saving ticket settings:", error);
           return { success: false, message: "Failed to save settings." };
       }
-      return { success: true, message: "Ticket settings saved successfully!" };
+      return { success: true, message: "Ticket settings saved!" };
   },
+
+  getAutoModSettings: async (guildId: string): Promise<AutoModSettings> => {
+      const { data, error } = await supabase
+        .from('guild_settings')
+        .select('automod_enabled, automod_block_bad_words, automod_anti_spam, automod_whitelisted_roles')
+        .eq('guild_id', guildId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      return {
+          enabled: data?.automod_enabled ?? false,
+          blockBadWords: data?.automod_block_bad_words ?? true,
+          antiSpam: data?.automod_anti_spam ?? true,
+          whitelistedRoles: data?.automod_whitelisted_roles ?? "",
+      };
+  },
+
+    saveAutoModSettings: async (guildId: string, settings: AutoModSettings): Promise<ApiResponse> => {
+        const { error } = await supabase.from('guild_settings').upsert({
+            guild_id: guildId,
+            automod_enabled: settings.enabled,
+            automod_block_bad_words: settings.blockBadWords,
+            automod_anti_spam: settings.antiSpam,
+            automod_whitelisted_roles: settings.whitelistedRoles,
+        });
+
+        if (error) {
+            console.error("Error saving automod settings:", error);
+            return { success: false, message: "Failed to save settings." };
+        }
+        return { success: true, message: "Auto-moderation settings saved!" };
+    },
+
+    getChatbotSettings: async (guildId: string): Promise<ChatbotSettings> => {
+        const { data, error } = await supabase
+            .from('guild_settings')
+            .select('chatbot_enabled, chatbot_channel_id, chatbot_persona')
+            .eq('guild_id', guildId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        return {
+            enabled: data?.chatbot_enabled ?? false,
+            channelId: data?.chatbot_channel_id ?? null,
+            persona: data?.chatbot_persona ?? "You are a helpful Discord bot.",
+        };
+    },
+
+    saveChatbotSettings: async (guildId: string, settings: ChatbotSettings): Promise<ApiResponse> => {
+        const { error } = await supabase.from('guild_settings').upsert({
+            guild_id: guildId,
+            chatbot_enabled: settings.enabled,
+            chatbot_channel_id: settings.channelId,
+            chatbot_persona: settings.persona,
+        });
+
+        if (error) {
+            console.error("Error saving chatbot settings:", error);
+            return { success: false, message: "Failed to save settings." };
+        }
+        return { success: true, message: "Chatbot settings saved!" };
+    },
+
+    getGiveawaySettings: async (guildId: string): Promise<GiveawaySettings> => {
+        const { data, error } = await supabase
+            .from('guild_settings')
+            .select('giveaway_manager_role_ids, giveaway_default_emoji')
+            .eq('guild_id', guildId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        return {
+            managerRoleIds: data?.giveaway_manager_role_ids ?? "",
+            defaultEmoji: data?.giveaway_default_emoji ?? "🎉",
+        };
+    },
+
+    saveGiveawaySettings: async (guildId: string, settings: GiveawaySettings): Promise<ApiResponse> => {
+        const { error } = await supabase.from('guild_settings').upsert({
+            guild_id: guildId,
+            giveaway_manager_role_ids: settings.managerRoleIds,
+            giveaway_default_emoji: settings.defaultEmoji,
+        });
+
+        if (error) {
+            console.error("Error saving giveaway settings:", error);
+            return { success: false, message: "Failed to save settings." };
+        }
+        return { success: true, message: "Giveaway settings saved!" };
+    },
+    
+    getClaimTimeSettings: async (guildId: string): Promise<ClaimTimeSettings> => {
+        const { data, error } = await supabase
+            .from('guild_settings')
+            .select('claimtime_enabled, claimtime_role_id, claimtime_command, claimtime_frequency_hours')
+            .eq('guild_id', guildId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        return {
+            enabled: data?.claimtime_enabled ?? false,
+            roleId: data?.claimtime_role_id ?? null,
+            command: data?.claimtime_command ?? "claim",
+            frequencyHours: data?.claimtime_frequency_hours ?? 24,
+        };
+    },
+
+    saveClaimTimeSettings: async (guildId: string, settings: ClaimTimeSettings): Promise<ApiResponse> => {
+        const { error } = await supabase.from('guild_settings').upsert({
+            guild_id: guildId,
+            claimtime_enabled: settings.enabled,
+            claimtime_role_id: settings.roleId,
+            claimtime_command: settings.command,
+            claimtime_frequency_hours: settings.frequencyHours,
+        });
+
+        if (error) {
+            console.error("Error saving claim time settings:", error);
+            return { success: false, message: "Failed to save settings." };
+        }
+        return { success: true, message: "Claim time settings saved!" };
+    },
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon, CogIcon, TicketIcon } from './Icons';
+import { HomeIcon, CogIcon, TicketIcon, ShieldCheckIcon, ChatBubbleIcon, GiftIcon, ClockIcon } from './Icons';
 
 interface SidebarProps {
   activeModule: string;
@@ -30,6 +30,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
         { id: 'dashboard', label: 'Dashboard', icon: <HomeIcon /> },
         { id: 'general', label: 'General Settings', icon: <CogIcon /> },
         { id: 'tickets', label: 'Ticket System', icon: <TicketIcon /> },
+        { id: 'automod', label: 'Auto Moderation', icon: <ShieldCheckIcon /> },
+        { id: 'chatbot', label: 'Chatbot', icon: <ChatBubbleIcon /> },
+        { id: 'giveaways', label: 'Giveaways', icon: <GiftIcon /> },
+        { id: 'claimtime', label: 'Claim Time', icon: <ClockIcon /> },
     ];
 
     return (

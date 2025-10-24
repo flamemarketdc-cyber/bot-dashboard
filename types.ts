@@ -15,7 +15,7 @@ export interface Guild {
 export interface Channel {
   id:string;
   name: string;
-  type: number; // 0 for text channel
+  type: number; // 0 for text, 4 for category
 }
 
 export interface ApiResponse {
@@ -32,5 +32,30 @@ export interface GeneralSettings {
 export interface TicketSettings {
     panelChannelId: string | null;
     categoryId: string | null;
-    supportRoleIds: string; // Storing as a comma-separated string for UI simplicity
+    supportRoleIds: string;
+}
+
+export interface AutoModSettings {
+    enabled: boolean;
+    blockBadWords: boolean;
+    antiSpam: boolean;
+    whitelistedRoles: string;
+}
+
+export interface ChatbotSettings {
+    enabled: boolean;
+    channelId: string | null;
+    persona: string;
+}
+
+export interface GiveawaySettings {
+    managerRoleIds: string;
+    defaultEmoji: string;
+}
+
+export interface ClaimTimeSettings {
+    enabled: boolean;
+    roleId: string | null;
+    command: string;
+    frequencyHours: number;
 }
