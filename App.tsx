@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { User } from './types';
-import { mockApiService } from './services/api';
+import { supabase } from './services/supabaseClient';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Spinner from './components/Spinner';
@@ -11,39 +10,60 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = () => {
-    // In a real app, this would redirect to the backend's /login endpoint
-    // window.location.href = 'http://localhost:4000/login';
-    // For this mock, we simulate the callback process.
-    setIsLoading(true);
-    mockApiService.handleCallback()
-      .then(setUser)
-      .catch(err => {
-        console.error(err);
-        setError('Failed to log in. Please try again.');
-      })
-      .finally(() => setIsLoading(false));
-  };
+  useEffect(() => {
+    // Supabase provides a listener to handle auth events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoading(true);
+      if (event === 'SIGNED_IN' && session) {
+        // Extract user data from the session
+        const profile = session.user.user_metadata;
+        setUser({
+          id: session.user.id,
+          username: profile.full_name || 'User',
+          avatar: profile.avatar_url,
+        });
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
 
-  const handleLogout = useCallback(() => {
-    mockApiService.logout();
-    setUser(null);
+    // Check the initial session
+    const checkInitialSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+             const profile = session.user.user_metadata;
+             setUser({
+                id: session.user.id,
+                username: profile.full_name || 'User',
+                avatar: profile.avatar_url,
+             });
+        }
+        setIsLoading(false);
+    };
+
+    checkInitialSession();
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  useEffect(() => {
-    // Check if the user is already logged in (e.g., from a previous session)
-    const checkSession = async () => {
-      try {
-        const currentUser = await mockApiService.getUser();
-        setUser(currentUser);
-      } catch (e) {
-        // No user in session, which is normal.
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    checkSession();
+  const handleLogin = async () => {
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'discord',
+    });
+    if (error) {
+      console.error('Error logging in:', error.message);
+      setError('Failed to log in. Please try again.');
+    }
+  };
+
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
   }, []);
 
   if (isLoading) {

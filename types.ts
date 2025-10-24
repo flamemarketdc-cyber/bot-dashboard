@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   username: string;
@@ -22,4 +21,16 @@ export interface Channel {
 export interface ApiResponse {
     success: boolean;
     message: string;
+}
+
+export interface GeneralSettings {
+    prefix: string;
+    welcomeChannelId: string | null;
+    logChannelId: string | null;
+}
+
+export interface TicketSettings {
+    panelChannelId: string | null;
+    categoryId: string | null;
+    supportRoleIds: string; // Storing as a comma-separated string for UI simplicity
 }
