@@ -20,10 +20,10 @@ serve(async (req: Request) => {
     if (!guildId) throw new Error('Guild ID is required.')
 
     // Retrieve the bot token from environment variables (Supabase secrets)
-    const botToken = (Deno as any).env.get('DISCORD_BOT_TOKEN');
+    const botToken = (Deno as any).env.get('TOKEN');
     if (!botToken) {
-        console.error('[get-discord-channels] DISCORD_BOT_TOKEN secret not set in Supabase.');
-        throw new Error('Bot token is not configured on the server.');
+        console.error('[get-discord-channels] TOKEN secret not set in Supabase.');
+        throw new Error('Bot token is not configured on the server. Please ensure the TOKEN secret is set in your Supabase project.');
     }
 
     // Fetch channels from the Discord API using the bot token

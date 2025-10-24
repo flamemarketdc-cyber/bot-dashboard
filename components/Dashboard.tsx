@@ -16,9 +16,10 @@ import { DiscordLogoIcon, ErrorIcon, CogIcon, TicketIcon, ShieldCheckIcon, ChatB
 interface DashboardProps {
   user: User;
   onLogout: () => void;
+  providerToken?: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) => {
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
@@ -38,7 +39,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   useEffect(() => {
     setError(null);
     setLoadingGuilds(true);
-    apiService.getGuilds()
+    if (!providerToken) {
+        setError("Authentication error: Could not find Discord access token. Please try logging out and back in.");
+        setLoadingGuilds(false);
+        return;
+    }
+
+    apiService.getGuilds(providerToken)
       .then(setGuilds)
       .catch(err => {
         setError(err.message || "An unknown error occurred while fetching servers.");
@@ -46,7 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       .finally(() => {
         setLoadingGuilds(false);
       });
-  }, []);
+  }, [providerToken]);
 
   useEffect(() => {
     if (selectedGuild) {
@@ -124,7 +131,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   // Handle the critical channel failure separately to show the detailed reason
                   if (chRes.status === 'rejected') {
                       const reason = chRes.reason?.message || 'The server returned an unknown error.';
-                      finalError += `CRITICAL: Could not fetch server channels. Reason: ${reason}. Most settings will be unavailable.`;
+                      finalError += `CRITICAL: Could not fetch server channels. ${reason}. Most settings will be unavailable.`;
                       
                       const otherFailed = failedModules.filter(m => m !== 'Channels');
                       if (otherFailed.length > 0) {

@@ -14,16 +14,9 @@ import { supabase } from './supabaseClient';
 export const apiService = {
   // NOTE: These functions now make authenticated requests to the Discord API
   // via a secure backend (Supabase Edge Functions).
-  getGuilds: async (): Promise<Guild[]> => {
+  getGuilds: async (accessToken: string): Promise<Guild[]> => {
     console.log("Fetching guilds via Supabase Function...");
     
-    const { data: { session } } = await supabase.auth.getSession();
-    const accessToken = session?.provider_token;
-
-    if (!accessToken) {
-      console.error('No Discord provider_token found in session.');
-      throw new Error('Authentication error: Could not find Discord access token. Please try logging out and back in.');
-    }
     console.log('Discord access token found. Invoking function...');
 
     const { data, error } = await supabase.functions.invoke('get-guilds', {
@@ -61,7 +54,8 @@ export const apiService = {
     
     if (error) {
       console.error(`Error invoking get-discord-channels function for guild ${guildId}:`, error.message);
-      throw new Error("Failed to fetch channels from Discord.");
+      const reason = error.context?.reason?.message || error.message;
+      throw new Error(`Failed to fetch channels from Discord. Reason: ${reason}`);
     }
     
     return data;

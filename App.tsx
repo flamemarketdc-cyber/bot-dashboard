@@ -1,45 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { User } from './types';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Spinner from './components/Spinner';
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsLoading(true);
-      if (event === 'SIGNED_IN' && session) {
-        const profile = session.user.user_metadata;
-        setUser({
-          id: session.user.id,
-          username: profile.full_name || 'User',
-          avatar: profile.avatar_url,
-        });
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-      }
+    setIsLoading(true);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setIsLoading(false);
     });
 
-    const checkInitialSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-             const profile = session.user.user_metadata;
-             setUser({
-                id: session.user.id,
-                username: profile.full_name || 'User',
-                avatar: profile.avatar_url,
-             });
-        }
-        setIsLoading(false);
-    };
-
-    checkInitialSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -62,8 +43,14 @@ const App: React.FC = () => {
 
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
-    setUser(null);
+    setSession(null);
   }, []);
+  
+  const user: User | null = session ? {
+      id: session.user.id,
+      username: session.user.user_metadata.full_name || 'User',
+      avatar: session.user.user_metadata.avatar_url,
+  } : null;
 
   if (isLoading) {
     return (
@@ -75,8 +62,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {user ? (
-        <Dashboard user={user} onLogout={handleLogout} />
+      {session && user ? (
+        <Dashboard user={user} onLogout={handleLogout} providerToken={session.provider_token} />
       ) : (
         <div className="min-h-screen flex flex-col items-center justify-center p-4">
             <Login onLogin={handleLogin} error={error} />
