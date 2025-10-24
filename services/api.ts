@@ -17,14 +17,14 @@ export const apiService = {
     }
     console.log('Discord access token found. Invoking function...');
 
-    const { data, error } = await supabase.functions.invoke('get-discord-guilds', {
+    const { data, error } = await supabase.functions.invoke('get-guilds', {
       body: { accessToken }, // Pass the token in the body to avoid header conflicts
     });
 
     console.log('Supabase function response:', { data, error });
     
     if (error) {
-      console.error("Error invoking get-discord-guilds function:", error.message);
+      console.error("Error invoking get-guilds function:", error.message);
       throw new Error(`Failed to fetch servers from Discord. Function error: ${error.message}`);
     }
 

@@ -93,14 +93,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     }
   };
   
-  if (loadingGuilds) {
-      return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-900">
-              <Spinner size="lg" />
-          </div>
-      );
-  }
-
   if (error && !selectedGuild) {
     return (
       <div className="w-full max-w-lg mx-auto">
@@ -126,18 +118,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             </div>
             <h2 className="text-2xl font-bold text-white mb-4">Select a Server</h2>
             <p className="text-gray-400 mb-6">
-                {guilds.length > 0
-                    ? 'Choose a server to configure your bot.'
-                    : 'No manageable servers found. Make sure you have "Manage Server" permissions in a server.'
+                {loadingGuilds
+                    ? 'Fetching your servers...'
+                    : guilds.length > 0
+                        ? 'Choose a server to configure your bot.'
+                        : 'No manageable servers found. Make sure you have "Manage Server" permissions in a server.'
                 }
             </p>
              <Select
                 label=""
                 value={''}
                 onChange={(e) => handleGuildChange(e.target.value)}
-                disabled={guilds.length === 0}
+                disabled={loadingGuilds || guilds.length === 0}
+                loading={loadingGuilds}
                 options={guilds.map(g => ({ value: g.id, label: g.name }))}
-                placeholder={guilds.length > 0 ? "Choose your server..." : "No servers available"}
+                placeholder={loadingGuilds ? "Loading servers..." : (guilds.length > 0 ? "Choose your server..." : "No servers available")}
             />
            </div>
       </div>
