@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { User, Guild, Channel } from '../types';
 import { apiService } from '../services/api';
 import Header from './Header';
@@ -12,6 +12,7 @@ import AutoModSettings from './settings/AutoModSettings';
 import ChatbotSettings from './settings/ChatbotSettings';
 import GiveawaySettings from './settings/GiveawaySettings';
 import ClaimTimeSettings from './settings/ClaimTimeSettings';
+import CommandsSettings from './settings/CommandsSettings';
 import { DiscordLogoIcon, ErrorIcon } from './Icons';
 
 interface DashboardProps {
@@ -60,7 +61,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
     }
 
     apiService.getGuilds(providerToken)
-      .then(setGuilds)
+      .then(fetchedGuilds => {
+        setGuilds(fetchedGuilds);
+        const savedGuildId = localStorage.getItem('selectedGuildId');
+        if (savedGuildId) {
+            const savedGuild = fetchedGuilds.find(g => g.id === savedGuildId);
+            if (savedGuild) {
+                setSelectedGuild(savedGuild);
+            }
+        }
+      })
       .catch(err => {
         setError(err.message || "An unknown error occurred while fetching servers.");
       })
@@ -69,101 +79,95 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
       });
   }, [providerToken]);
 
+  const fetchAllSettings = useCallback(async (guild: Guild) => {
+    setLoadingData(true);
+    setError(null);
+    try {
+        const results = await Promise.allSettled([
+            apiService.getChannels(guild.id),
+            apiService.getGeneralSettings(guild.id),
+            apiService.getTicketSettings(guild.id),
+            apiService.getAutoModSettings(guild.id),
+            apiService.getChatbotSettings(guild.id),
+            apiService.getGiveawaySettings(guild.id),
+            apiService.getClaimTimeSettings(guild.id),
+            apiService.getCommandSettings(guild.id), // Fetch new settings
+        ]);
+
+        const [chRes, genRes, tktRes, amRes, cbRes, gvRes, ctRes, cmdRes] = results;
+        const failedModules: string[] = [];
+
+        if (chRes.status === 'fulfilled') setChannels(chRes.value);
+        else {
+            console.error("Failed to fetch channels:", chRes.reason);
+            setChannels([]);
+        }
+
+        if (genRes.status === 'fulfilled') setPrefix(genRes.value.prefix);
+        else {
+            failedModules.push('General Settings');
+        }
+
+        if (tktRes.status === 'fulfilled') setTicketEnabled(!!tktRes.value.panelChannelId);
+        else {
+            failedModules.push('Ticket System');
+        }
+        
+        if (amRes.status === 'fulfilled') setAutoModEnabled(amRes.value.enabled);
+        else {
+            failedModules.push('Auto Moderation');
+        }
+        
+        if (cbRes.status === 'fulfilled') setChatbotEnabled(cbRes.value.enabled);
+        else {
+            failedModules.push('Chatbot');
+        }
+        
+        if (gvRes.status === 'fulfilled') setGiveawaysConfigured(gvRes.value.managerRoleIds.length > 0);
+        else {
+            failedModules.push('Giveaways');
+        }
+        
+        if (ctRes.status === 'fulfilled') setClaimTimeEnabled(ctRes.value.enabled);
+        else {
+            failedModules.push('Giveaway Claim Time');
+        }
+        
+        // Don't need to do anything with cmdRes for overview
+
+        let finalError = '';
+        if (chRes.status === 'rejected') {
+            const reason = chRes.reason?.message || 'The server returned an unknown error.';
+            finalError += `Failed to fetch server channels. ${reason}. Settings that require a channel list may be disabled.`;
+        }
+        if (failedModules.length > 0) {
+            finalError += ` Could not fetch settings for: ${failedModules.join(', ')}.`;
+        }
+        if(finalError) setError(finalError.trim());
+
+    } catch (err: any) {
+        setError("A critical error occurred while fetching server data.");
+        console.error("Critical fetch error:", err);
+    } finally {
+        setLoadingData(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (selectedGuild) {
       setChannels([]);
-      // Reset to dashboard page on guild change
       window.location.hash = '#/dashboard';
-      
-      const fetchAllSettings = async () => {
-          setLoadingData(true);
-          setError(null);
-          try {
-              const results = await Promise.allSettled([
-                  apiService.getChannels(selectedGuild.id),
-                  apiService.getGeneralSettings(selectedGuild.id),
-                  apiService.getTicketSettings(selectedGuild.id),
-                  apiService.getAutoModSettings(selectedGuild.id),
-                  apiService.getChatbotSettings(selectedGuild.id),
-                  apiService.getGiveawaySettings(selectedGuild.id),
-                  apiService.getClaimTimeSettings(selectedGuild.id),
-              ]);
-
-              const [chRes, genRes, tktRes, amRes, cbRes, gvRes, ctRes] = results;
-              const failedModules: string[] = [];
-
-              if (chRes.status === 'fulfilled') setChannels(chRes.value);
-              else {
-                  console.error("Failed to fetch channels:", chRes.reason);
-                  setChannels([]);
-              }
-
-              if (genRes.status === 'fulfilled') setPrefix(genRes.value.prefix);
-              else {
-                  console.error("Failed to fetch general settings:", genRes.reason);
-                  setPrefix(',');
-                  failedModules.push('General Settings');
-              }
-
-              if (tktRes.status === 'fulfilled') setTicketEnabled(!!tktRes.value.panelChannelId);
-              else {
-                  console.error("Failed to fetch ticket settings:", tktRes.reason);
-                  setTicketEnabled(false);
-                  failedModules.push('Ticket System');
-              }
-              
-              if (amRes.status === 'fulfilled') setAutoModEnabled(amRes.value.enabled);
-              else {
-                  console.error("Failed to fetch automod settings:", amRes.reason);
-                  setAutoModEnabled(false);
-                  failedModules.push('Auto Moderation');
-              }
-              
-              if (cbRes.status === 'fulfilled') setChatbotEnabled(cbRes.value.enabled);
-              else {
-                  console.error("Failed to fetch chatbot settings:", cbRes.reason);
-                  setChatbotEnabled(false);
-                  failedModules.push('Chatbot');
-              }
-              
-              if (gvRes.status === 'fulfilled') setGiveawaysConfigured(gvRes.value.managerRoleIds.length > 0);
-              else {
-                  console.error("Failed to fetch giveaway settings:", gvRes.reason);
-                  setGiveawaysConfigured(false);
-                  failedModules.push('Giveaways');
-              }
-              
-              if (ctRes.status === 'fulfilled') setClaimTimeEnabled(ctRes.value.enabled);
-              else {
-                  console.error("Failed to fetch claim time settings:", ctRes.reason);
-                  setClaimTimeEnabled(false);
-                  failedModules.push('Giveaway Claim Time');
-              }
-
-              let finalError = '';
-              if (chRes.status === 'rejected') {
-                  const reason = chRes.reason?.message || 'The server returned an unknown error.';
-                  finalError += `Failed to fetch server channels. ${reason}. Settings that require a channel list may be disabled.`;
-              }
-              if (failedModules.length > 0) {
-                  finalError += ` Could not fetch settings for: ${failedModules.join(', ')}.`;
-              }
-              if(finalError) setError(finalError.trim());
-
-          } catch (err: any) {
-              setError("A critical error occurred while fetching server data.");
-              console.error("Critical fetch error:", err);
-          } finally {
-              setLoadingData(false);
-          }
-      };
-      
-      fetchAllSettings();
+      fetchAllSettings(selectedGuild);
     }
-  }, [selectedGuild]);
+  }, [selectedGuild, fetchAllSettings]);
 
   const handleGuildChange = (guildId: string) => {
     const guild = guilds.find(g => g.id === guildId) || null;
+    if (guild) {
+        localStorage.setItem('selectedGuildId', guild.id);
+    } else {
+        localStorage.removeItem('selectedGuildId');
+    }
     setSelectedGuild(guild);
   };
   
@@ -175,6 +179,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
     switch (currentPath) {
       case '#/general':
         return <GeneralSettings guild={selectedGuild!} channels={channels} />;
+      case '#/commands':
+        return <CommandsSettings guild={selectedGuild!} />;
       case '#/tickets':
         return <TicketSettings guild={selectedGuild!} channels={channels} />;
       case '#/automod':
@@ -242,11 +248,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   }
 
   return (
-    <div className="w-screen h-screen flex">
-      <Sidebar />
+    <div className="w-screen h-screen flex bg-[#16191C]">
+      <Sidebar onRefresh={() => fetchAllSettings(selectedGuild)} />
       <div className="flex-grow flex flex-col overflow-hidden">
-        <Header user={user} onLogout={onLogout} selectedGuild={selectedGuild} />
-        <main className="flex-grow overflow-y-auto">
+        <Header 
+            user={user} 
+            onLogout={onLogout} 
+            guilds={guilds}
+            selectedGuild={selectedGuild}
+            onGuildChange={handleGuildChange}
+        />
+        <main className="flex-grow overflow-y-auto bg-[#1E2124]">
           {error && !loadingData && (
              <div className="p-4 mx-6 md:mx-8 mt-6 md:mt-8 bg-red-900/50 border border-red-700/80 rounded-lg animate-fade-in-up">
                 <div className="flex items-start">

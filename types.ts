@@ -59,3 +59,9 @@ export interface ClaimTimeSettings {
     logic: 'additive' | 'highest';
     roleTimes: { roleId: string; minutes: number }[];
 }
+
+export interface CommandSettings {
+  prefixes: string[];
+  errorCommandNotFoundEnabled: boolean;
+  errorWrongUsageEnabled: boolean;
+}

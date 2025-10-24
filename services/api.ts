@@ -7,7 +7,8 @@ import type {
     AutoModSettings,
     ChatbotSettings,
     GiveawaySettings,
-    ClaimTimeSettings
+    ClaimTimeSettings,
+    CommandSettings
 } from '../types';
 import { supabase } from './supabaseClient';
 
@@ -254,4 +255,35 @@ export const apiService = {
         }
         return { success: true, message: "Claim time settings saved!" };
     },
+
+    getCommandSettings: async (guildId: string): Promise<CommandSettings> => {
+        const { data, error } = await supabase
+            .from('guild_settings')
+            .select('command_prefixes, command_error_not_found, command_error_wrong_usage')
+            .eq('guild_id', guildId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        return {
+            prefixes: data?.command_prefixes ?? ['!'],
+            errorCommandNotFoundEnabled: data?.command_error_not_found ?? true,
+            errorWrongUsageEnabled: data?.command_error_wrong_usage ?? true,
+        };
+    },
+
+    saveCommandSettings: async (guildId: string, settings: CommandSettings): Promise<ApiResponse> => {
+        const { error } = await supabase.from('guild_settings').upsert({
+            guild_id: guildId,
+            command_prefixes: settings.prefixes,
+            command_error_not_found: settings.errorCommandNotFoundEnabled,
+            command_error_wrong_usage: settings.errorWrongUsageEnabled,
+        });
+
+        if (error) {
+            console.error("Error saving command settings:", error);
+            return { success: false, message: "Failed to save command settings." };
+        }
+        return { success: true, message: "Command settings saved!" };
+    }
 };
