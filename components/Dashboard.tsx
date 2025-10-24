@@ -52,8 +52,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       apiService.getChannels(selectedGuild.id)
         .then(setChannels)
         .catch(err => {
-            console.error("Failed to fetch channels", err)
-            setError(err.message || `Could not fetch channels for ${selectedGuild.name}.`);
+            console.warn(`Could not fetch channels for ${selectedGuild.name}. Settings pages will have empty channel selectors, but will still be functional.`, err);
+            // We'll proceed with an empty channel list instead of showing a blocking error.
         })
         .finally(() => setLoadingChannels(false));
     }

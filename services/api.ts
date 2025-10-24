@@ -76,7 +76,7 @@ export const apiService = {
       }
       
       return {
-          prefix: data?.prefix ?? '!', // Default prefix
+          prefix: data?.prefix ?? ',', // Default prefix
           welcomeChannelId: data?.welcome_channel_id ?? null,
           logChannelId: data?.log_channel_id ?? null,
       };
