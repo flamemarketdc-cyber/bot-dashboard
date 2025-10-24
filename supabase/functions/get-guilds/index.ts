@@ -6,26 +6,23 @@ const MANAGE_GUILD_PERMISSION = 0x20 // Hex for "Manage Server"
 // Define CORS headers for browser-based clients
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req: Request) => {
-  console.log(`[get-guilds] Received request: ${req.method}`);
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    console.log('[get-guilds] Handling OPTIONS preflight request.');
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
-    console.log('[get-guilds] Handling POST request.');
-    // 1. Get accessToken from the request body
     const { accessToken } = await req.json()
     if (!accessToken) {
       throw new Error('Access token is required.')
     }
 
-    // 2. Fetch guilds from Discord API
+    // Fetch guilds from Discord API
     const response = await fetch(`${DISCORD_API_URL}/users/@me/guilds`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -40,7 +37,7 @@ serve(async (req: Request) => {
     
     const guilds = await response.json()
 
-    // 3. Filter for guilds where the user has "Manage Server" permissions and map the data.
+    // Filter for guilds where the user has "Manage Server" permissions and map the data.
     const manageableGuilds = guilds
       .filter(
         (guild: any) => guild.owner || (parseInt(guild.permissions) & MANAGE_GUILD_PERMISSION)
@@ -55,13 +52,11 @@ serve(async (req: Request) => {
         permissions: guild.permissions,
       }))
 
-    // 4. Return the filtered guilds
     return new Response(JSON.stringify(manageableGuilds), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
-    // 5. Handle any errors and return a JSON response
     console.error('[get-guilds] An error occurred:', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
