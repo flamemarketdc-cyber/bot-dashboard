@@ -6,6 +6,9 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
+      options: {
+        scopes: 'guilds', // Request permission to access user's servers
+      },
     });
     if (error) {
       console.error('Error logging in:', error.message);
