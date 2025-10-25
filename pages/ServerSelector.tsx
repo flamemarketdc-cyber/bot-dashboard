@@ -45,22 +45,19 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Guard clause: Don't run if the session isn't available yet.
+        // App.tsx will provide the session when ready.
+        if (!session) {
+            setLoading(false); // Not loading if there's no session
+            return;
+        }
+
         const fetchGuilds = async () => {
             setLoading(true);
             setError(null);
             try {
-                // First, explicitly get the session to ensure we have the token.
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-                if (sessionError) {
-                    throw new Error(`Authentication error: ${sessionError.message}`);
-                }
-                
-                if (!session) {
-                    // This case should ideally be handled by the parent component (App.tsx),
-                    // but it's good practice to have a safeguard.
-                    throw new Error("You are not logged in. Please log in to view your servers.");
-                }
+                // Rely on the session object from props, which is kept fresh
+                // by the onAuthStateChange listener in App.tsx.
 
                 // Manually set the Authorization header for the function invocation
                 // to prevent a race condition where the client isn't ready.
@@ -85,7 +82,7 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
         };
 
         fetchGuilds();
-    }, []); // An empty dependency array ensures this runs only once when the component mounts.
+    }, [session]); // React to session changes to ensure a fresh token is always used.
     
     const handleLogout = async () => {
         await supabase.auth.signOut();
