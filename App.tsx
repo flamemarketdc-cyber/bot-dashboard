@@ -92,7 +92,7 @@ const App: React.FC = () => {
   }
   
   if (!selectedGuild) {
-    return <ServerSelector session={session} onGuildSelect={setSelectedGuild} />;
+    return <ServerSelector onGuildSelect={setSelectedGuild} />;
   }
 
   return <Dashboard user={session.user} guild={selectedGuild} onServerSelect={() => setSelectedGuild(null)} />;

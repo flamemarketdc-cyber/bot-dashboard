@@ -6,7 +6,6 @@ import type { Session } from '@supabase/supabase-js';
 import { LogoutIcon } from '../components/Icons';
 
 interface ServerSelectorProps {
-    session: Session;
     onGuildSelect: (guild: Guild) => void;
 }
 
@@ -39,16 +38,29 @@ const ServerCard: React.FC<{ guild: Guild, onSelect: () => void }> = ({ guild, o
 }
 
 
-const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect }) => {
+const ServerSelector: React.FC<ServerSelectorProps> = ({ onGuildSelect }) => {
+    const [session, setSession] = useState<Session | null>(null);
     const [guilds, setGuilds] = useState<Guild[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Effect 1: Get the session and subscribe to auth changes. This runs only once.
     useEffect(() => {
-        // Guard clause: Don't run if the session isn't available yet.
-        // App.tsx will provide the session when ready.
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+        });
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    // Effect 2: Fetch guilds only when a valid session object is available.
+    useEffect(() => {
+        // Don't fetch if there's no session.
         if (!session) {
-            setLoading(false); // Not loading if there's no session
             return;
         }
 
@@ -56,11 +68,6 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
             setLoading(true);
             setError(null);
             try {
-                // Rely on the session object from props, which is kept fresh
-                // by the onAuthStateChange listener in App.tsx.
-
-                // Manually set the Authorization header for the function invocation
-                // to prevent a race condition where the client isn't ready.
                 const { data, error: funcError } = await supabase.functions.invoke('get-guilds', {
                     headers: {
                         Authorization: `Bearer ${session.access_token}`
@@ -68,8 +75,6 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
                 });
 
                 if (funcError) throw funcError;
-
-                // The Edge Function might return its own error object in the data payload.
                 if (data.error) throw new Error(data.error);
 
                 setGuilds(data);
@@ -82,11 +87,16 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
         };
 
         fetchGuilds();
-    }, [session]); // React to session changes to ensure a fresh token is always used.
-    
+    }, [session]); // This effect runs only when the session object itself changes.
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
     };
+
+    // While waiting for the initial session from the first useEffect
+    if (!session) {
+        return <div className="min-h-screen bg-base-100 flex items-center justify-center"><div className="text-center text-gray-400">Authenticating...</div></div>
+    }
 
 
     return (
