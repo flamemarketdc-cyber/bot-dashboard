@@ -63,6 +63,10 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
                     throw new Error("You are not logged in. Please log in to view your servers.");
                 }
 
+                console.log("--- DEBUGGING: Checking session before invoking function... ---");
+                const { data: { session } } = await supabase.auth.getSession();
+                console.log("--- DEBUGGING: The session object is: ", session);
+
                 // Now that we have a confirmed session, we can safely invoke the function.
                 // The client will automatically use the session's JWT for the Authorization header.
                 const { data, error: funcError } = await supabase.functions.invoke('get-guilds');
