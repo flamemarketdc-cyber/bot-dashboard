@@ -1,5 +1,5 @@
 {
-  "name": "Discord Bot Dashboard",
-  "description": "A web dashboard to control a Discord bot. Users can log in with Discord, select a server and channel, and send announcements.",
+  "name": "Futuristic Discord Dashboard",
+  "description": "A modern, animated web dashboard for a Discord application, inspired by Sapphire, using React, Tailwind CSS, and Framer Motion.",
   "requestFramePermissions": []
 }

@@ -1,108 +1,62 @@
-import React, { useState, useEffect, useRef } from 'react';
-import type { User, Guild } from '../types';
-import { LogoutIcon, ChevronDownIcon, FlamingLogoIcon } from './Icons';
+import React from 'react';
+import { MenuIcon, ChevronDownIcon, LogoutIcon, SwitchUserIcon } from './Icons';
+import type { User } from '@supabase/supabase-js';
+import { Guild } from '../App';
+import { supabase } from '../services/supabaseClient';
+
 
 interface HeaderProps {
   user: User;
-  onLogout: () => void;
-  guilds?: Guild[];
-  selectedGuild?: Guild | null;
-  onGuildChange?: (guildId: string) => void;
+  guild: Guild;
+  onMenuClick: () => void;
+  onServerSelect: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onLogout, guilds, selectedGuild, onGuildChange }) => {
-  const [isGuildDropdownOpen, setGuildDropdownOpen] = useState(false);
-  const [isUserDropdownOpen, setUserDropdownOpen] = useState(false);
-  const guildDropdownRef = useRef<HTMLDivElement>(null);
-  const userDropdownRef = useRef<HTMLDivElement>(null);
+const Header: React.FC<HeaderProps> = ({ user, guild, onMenuClick, onServerSelect }) => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  }
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (guildDropdownRef.current && !guildDropdownRef.current.contains(event.target as Node)) {
-        setGuildDropdownOpen(false);
-      }
-      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
-        setUserDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-  
   return (
-    <header className="w-full h-16 px-4 flex-shrink-0 bg-[#181818]/80 backdrop-blur-md border-b border-zinc-800 shadow-lg z-20">
-      <div className="max-w-7xl mx-auto h-full flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-              <FlamingLogoIcon className="h-8 w-8" />
-              <h1 className="text-xl font-bold text-white">Flaming</h1>
-          </div>
-          
-          {selectedGuild && guilds && onGuildChange && (
-            <>
-              <div className="w-px h-6 bg-zinc-700"></div>
-              <div className="relative" ref={guildDropdownRef}>
-                <button
-                  onClick={() => setGuildDropdownOpen(!isGuildDropdownOpen)}
-                  className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-md transition-colors hover:bg-zinc-700/60"
-                >
-                  <img src={selectedGuild.icon} alt={selectedGuild.name} className="w-8 h-8 rounded-md flex-shrink-0" />
-                  <span className="text-sm font-medium text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">{selectedGuild.name}</span>
-                  <ChevronDownIcon className={`transition-transform duration-200 flex-shrink-0 w-4 h-4 text-zinc-400 ${isGuildDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isGuildDropdownOpen && (
-                   <div className="absolute top-full mt-2 w-64 bg-[#1c1c1c] border border-zinc-800 rounded-lg shadow-2xl z-10 animate-fade-in-up" style={{animationDuration: '0.2s'}}>
-                      <div className="p-1 max-h-80 overflow-y-auto">
-                        {guilds.map(guild => (
-                          <button
-                            key={guild.id}
-                            onClick={() => {
-                              onGuildChange(guild.id);
-                              setGuildDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors ${guild.id === selectedGuild.id ? 'bg-zinc-700' : 'hover:bg-zinc-700/50'}`}
-                          >
-                             <img src={guild.icon} alt={guild.name} className="w-8 h-8 rounded-md" />
-                             <span className="text-sm font-medium text-zinc-200">{guild.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                   </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="relative" ref={userDropdownRef}>
-          <button 
-              onClick={() => setUserDropdownOpen(!isUserDropdownOpen)}
-              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-md transition-colors hover:bg-zinc-700/60"
-          >
-              <img
-                  src={user.avatar}
-                  alt={`${user.username}'s avatar`}
-                  className="w-8 h-8 rounded-full flex-shrink-0"
-              />
-              <span className="hidden sm:inline text-sm font-medium text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">{user.username}</span>
-              <ChevronDownIcon className={`transition-transform duration-200 flex-shrink-0 w-4 h-4 text-zinc-400 ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
+    <header className="flex-shrink-0 flex items-center justify-between h-20 px-4 sm:px-6 md:px-8 bg-base-200">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={onMenuClick}
+          className="text-gray-400 hover:text-white md:hidden"
+          aria-label="Open sidebar"
+        >
+          <MenuIcon />
+        </button>
+        <div className="hidden md:flex items-center gap-4">
+          <img src="https://media.discordapp.net/attachments/1409211763253051519/1409846946390081547/fd6563b98e631901ed195c73962b1aa0-removebg-preview.png?ex=68fdfdfc&is=68fca67c&hm=a1a2438675402472851a02b737159c4b2674b1e4f489f55e003c53c457f97576&=&format=webp&quality=lossless&width=450&height=450" alt="Chanel Logo" className="w-10 h-10" />
+          <span className="text-xl font-bold text-white">Chanel</span>
+           <button onClick={onServerSelect} className="flex items-center gap-2 bg-base-300/50 hover:bg-base-300 px-3 py-1.5 rounded-lg ml-4">
+              <img src={guild.icon} alt={guild.name} className="w-6 h-6 rounded-full" />
+              <span className="font-semibold text-white flex-1 text-left">{guild.name}</span>
+              <ChevronDownIcon />
           </button>
-          {isUserDropdownOpen && (
-               <div className="absolute top-full mt-2 w-48 right-0 bg-[#1c1c1c] border border-zinc-800 rounded-lg shadow-2xl z-10 animate-fade-in-up" style={{animationDuration: '0.2s'}}>
-                  <div className="p-1">
-                       <button
-                          onClick={onLogout}
-                          className="w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors text-red-400 hover:bg-red-500/10"
-                          aria-label="Logout"
-                      >
-                          <LogoutIcon className="w-5 h-5"/>
-                          <span className="font-semibold text-sm">Logout</span>
-                      </button>
-                  </div>
-               </div>
-          )}
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-4">
+        <div className="relative group">
+            <button className="flex items-center space-x-2">
+                <img src={user.user_metadata.avatar_url} alt={user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
+                <span className="hidden sm:inline font-medium text-white">{user.user_metadata.full_name}</span>
+                <div className="hidden sm:inline text-gray-400 group-hover:text-white transition-transform group-hover:rotate-180">
+                  <ChevronDownIcon />
+                </div>
+            </button>
+            <div className="absolute right-0 mt-2 w-56 bg-base-300 rounded-md shadow-lg py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto z-10">
+                <a href="#" className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-base-400/50">
+                    <SwitchUserIcon />
+                    <span className="ml-2">Switch Accounts</span>
+                </a>
+                <button onClick={handleLogout} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-base-400/50">
+                    <LogoutIcon />
+                     <span className="ml-2">Logout</span>
+                </button>
+            </div>
         </div>
       </div>
     </header>

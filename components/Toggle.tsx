@@ -1,48 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ToggleProps {
-    checked: boolean;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    label: string;
-    description: string;
-    size?: 'sm' | 'md';
+  enabled: boolean;
+  setEnabled: (enabled: boolean) => void;
 }
 
-const Toggle: React.FC<ToggleProps> = ({checked, onChange, label, description, size = 'md'}) => {
-    const sizeClasses = {
-        sm: {
-            container: "w-9 h-5",
-            dot: "h-4 w-4",
-            translate: "peer-checked:translate-x-4",
-        },
-        md: {
-            container: "w-11 h-6",
-            dot: "h-5 w-5",
-            translate: "peer-checked:translate-x-full",
-        },
-    }
-    const currentSize = sizeClasses[size];
-
-    const content = (
-        <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" checked={checked} onChange={onChange} className="sr-only peer" />
-            <div className={`${currentSize.container} bg-zinc-700 rounded-full peer peer-focus:ring-2 peer-focus:ring-red-800/50 peer-checked:after:${currentSize.translate} peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full ${currentSize.dot} after:transition-all peer-checked:bg-red-600`}></div>
-        </label>
-    );
-
-    if (!label) {
-        return content;
-    }
-
-    return (
-        <div className="flex items-center justify-between">
-            <div>
-                <h4 className="text-md font-semibold text-zinc-200">{label}</h4>
-                <p className="text-sm text-zinc-400">{description}</p>
-            </div>
-            {content}
-        </div>
-    );
-}
+const Toggle: React.FC<ToggleProps> = ({ enabled, setEnabled }) => {
+  return (
+    <button
+      type="button"
+      className={`${
+        enabled ? 'bg-vibrant-red' : 'bg-base-400'
+      } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-vibrant-red focus:ring-offset-2 focus:ring-offset-base-200`}
+      role="switch"
+      aria-checked={enabled}
+      onClick={() => setEnabled(!enabled)}
+    >
+      <span
+        aria-hidden="true"
+        className={`${
+          enabled ? 'translate-x-5' : 'translate-x-0'
+        } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+      />
+    </button>
+  );
+};
 
 export default Toggle;

@@ -1,110 +1,141 @@
 import React, { useState, useEffect } from 'react';
-import type { Guild, Channel, GeneralSettings as Settings, ApiResponse } from '../../types';
-import { apiService } from '../../services/api';
-import Select from '../Select';
-import Spinner from '../Spinner';
-import SettingsLayout from './SettingsLayout';
 import SettingsCard from './SettingsCard';
+import Toggle from '../Toggle';
+import { ShieldIcon, TrashIcon, PlusIcon } from '../Icons';
+import { supabase } from '../../services/supabaseClient';
+import { Guild } from '../../App';
 
 interface GeneralSettingsProps {
-  guild: Guild;
-  channels: Channel[];
+    guild: Guild;
 }
 
-const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) => {
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
+const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild }) => {
+    const [is24Hour, setIs24Hour] = useState(true);
+    const [errorLogsEnabled, setErrorLogsEnabled] = useState(false);
+    const [managerRoles, setManagerRoles] = useState(['Admin', 'Moderator']);
+    const [prefix, setPrefix] = useState(',');
+    const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    setIsLoading(true);
-    apiService.getGeneralSettings(guild.id)
-      .then(setSettings)
-      .catch(err => console.error(err))
-      .finally(() => setIsLoading(false));
-  }, [guild.id]);
+    useEffect(() => {
+        const fetchPrefix = async () => {
+            const { data, error } = await supabase
+                .from('guild_settings')
+                .select('prefix')
+                .eq('guild_id', guild.id)
+                .single();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!settings) return;
-    setSettings({ ...settings, [e.target.name]: e.target.value });
-  };
+            if (data && data.prefix) {
+                setPrefix(data.prefix);
+            }
+        };
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!settings) return;
-    setSettings({ ...settings, [e.target.name]: e.target.value || null });
-  };
-  
-  const handleSave = async () => {
-      if (!settings) return;
-      setIsSaving(true);
-      setApiResponse(null);
-      try {
-          const response = await apiService.saveGeneralSettings(guild.id, settings);
-          setApiResponse(response);
-      } catch (error: any) {
-          setApiResponse({ success: false, message: 'An unexpected error occurred.' });
-      } finally {
-          setIsSaving(false);
-          setTimeout(() => setApiResponse(null), 5000);
-      }
-  };
+        fetchPrefix();
+    }, [guild.id]);
 
-  if (isLoading || !settings) {
-    return <div className="flex items-center justify-center h-full"><Spinner size="lg" /></div>;
-  }
-  
-  const textChannels = channels.filter(c => c.type === 0);
-  const noChannelsAvailable = channels.length === 0;
+    const handleSavePrefix = async () => {
+        setSaving(true);
+        const { error } = await supabase
+            .from('guild_settings')
+            .upsert({ guild_id: guild.id, prefix: prefix });
 
-  return (
-    <SettingsLayout
-      title="General Settings"
-      description="Configure the core behavior and channel settings for the bot in your server."
-      isSaving={isSaving}
-      onSave={handleSave}
-      apiResponse={apiResponse}
-    >
-      <SettingsCard title="Bot Prefix">
-        <label htmlFor="prefix" className="block text-sm font-medium text-zinc-300 mb-2">
-          The character the bot responds to.
-        </label>
-        <input
-          type="text"
-          id="prefix"
-          name="prefix"
-          value={settings.prefix}
-          onChange={handleInputChange}
-          className="w-full max-w-xs bg-[#1c1c1c] border border-zinc-800 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
-        />
-      </SettingsCard>
+        if (error) {
+            console.error('Error saving prefix:', error);
+            // Here you would show an error toast to the user
+        } else {
+            // Here you would show a success toast
+        }
+        setSaving(false);
+    };
 
-      <SettingsCard title="Channel Configuration">
-        <div className="space-y-4">
-          <Select
-            label="Welcome Channel"
-            name="welcomeChannelId"
-            value={settings.welcomeChannelId ?? ""}
-            onChange={handleSelectChange}
-            options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-            placeholder={noChannelsAvailable ? "Could not load channels" : "Select a channel for greetings"}
-            description="The bot will greet new members in this channel."
-            disabled={noChannelsAvailable}
-          />
-          <Select
-            label="Log Channel"
-            name="logChannelId"
-            value={settings.logChannelId ?? ""}
-            onChange={handleSelectChange}
-            options={textChannels.map(c => ({ value: c.id, label: `# ${c.name}` }))}
-            placeholder={noChannelsAvailable ? "Could not load channels" : "Select a channel for logs"}
-            description="Important bot and server events will be logged here."
-            disabled={noChannelsAvailable}
-          />
+
+    const handleRemoveRole = (roleToRemove: string) => {
+        setManagerRoles(roles => roles.filter(role => role !== roleToRemove));
+    };
+
+    return (
+        <div>
+            <h1 className="text-3xl font-bold text-white">General Settings</h1>
+            <p className="text-gray-400 mt-1">Manage general settings for your server.</p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                {/* Column 1 */}
+                <div className="flex flex-col gap-6">
+                    <SettingsCard title="Bot Prefix" description="Set the command prefix for the bot in this server.">
+                        <div className="flex gap-2">
+                           <input 
+                                type="text"
+                                value={prefix}
+                                onChange={(e) => setPrefix(e.target.value)}
+                                className="flex-grow bg-base-300 border border-base-400 text-white rounded-md p-2 focus:ring-vibrant-red focus:border-vibrant-red"
+                                placeholder="Enter prefix..."
+                           />
+                            <button 
+                                onClick={handleSavePrefix}
+                                disabled={saving}
+                                className="px-5 bg-vibrant-red text-white font-semibold rounded-md hover:bg-opacity-80 transition-all disabled:bg-opacity-50 disabled:cursor-not-allowed">
+                                {saving ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                    </SettingsCard>
+
+                    <SettingsCard title="Localization" description="Set your preferred language and time format.">
+                        <div className="space-y-4">
+                            <div>
+                                <label htmlFor="language" className="block text-sm font-medium text-gray-300 mb-2">Language</label>
+                                <select id="language" name="language" className="w-full bg-base-300 border border-base-400 text-white rounded-md p-2 focus:ring-vibrant-red focus:border-vibrant-red">
+                                    <option>English</option>
+                                    <option>Spanish</option>
+                                    <option>French</option>
+                                    <option>German</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-300">Time Format</h4>
+                                    <p className="text-xs text-gray-500">Display time in 24-hour format.</p>
+                                </div>
+                                <Toggle enabled={is24Hour} setEnabled={setIs24Hour} />
+                            </div>
+                        </div>
+                    </SettingsCard>
+                </div>
+
+                {/* Column 2 */}
+                <div className="flex flex-col gap-6">
+                    <SettingsCard title="Manager Roles" description="Users with these roles can change bot settings.">
+                        <div className="space-y-3">
+                            {managerRoles.map(role => (
+                                <div key={role} className="flex items-center justify-between bg-base-300/50 p-2 rounded-md">
+                                    <span className="text-sm font-medium text-gray-300 flex items-center gap-2"><ShieldIcon/> {role}</span>
+                                    <button onClick={() => handleRemoveRole(role)} className="text-gray-500 hover:text-vibrant-red"><TrashIcon/></button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                             <select className="w-full bg-base-300 border border-base-400 text-white rounded-md p-2 focus:ring-vibrant-red focus:border-vibrant-red">
+                                    <option disabled selected>Select a role to add...</option>
+                                    <option>Head Mod</option>
+                                    <option>Community Manager</option>
+                                </select>
+                            <button className="flex items-center justify-center px-4 bg-vibrant-red text-white font-semibold rounded-md hover:bg-opacity-80 transition-colors">
+                                <PlusIcon />
+                            </button>
+                        </div>
+                    </SettingsCard>
+
+                     <SettingsCard title="Developer" description="Manage developer-related settings.">
+                         <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-300">Error Logs</h4>
+                                    <p className="text-xs text-gray-500">Enable logging of command errors.</p>
+                                </div>
+                                <Toggle enabled={errorLogsEnabled} setEnabled={setErrorLogsEnabled} />
+                            </div>
+                    </SettingsCard>
+                </div>
+            </div>
         </div>
-      </SettingsCard>
-    </SettingsLayout>
-  );
+    );
 };
 
 export default GeneralSettings;

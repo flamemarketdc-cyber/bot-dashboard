@@ -1,17 +1,23 @@
 import React from 'react';
 
 interface SettingsCardProps {
+    title: string;
+    description: string;
     children: React.ReactNode;
-    title?: string;
-    description?: string;
 }
 
-const SettingsCard: React.FC<SettingsCardProps> = ({ children, title, description }) => (
-    <div className="bg-[#1c1c1c] border border-zinc-800 rounded-lg p-6">
-        {title && <h3 className="text-lg font-bold text-zinc-100 mb-1">{title}</h3>}
-        {description && <p className="text-sm text-zinc-400 mb-4">{description}</p>}
-        {children}
-    </div>
-);
+const SettingsCard: React.FC<SettingsCardProps> = ({ title, description, children }) => {
+    return (
+        <div className="bg-base-200 rounded-lg shadow-lg">
+            <div className="p-6 border-b border-base-300">
+                <h3 className="text-lg font-semibold text-white">{title}</h3>
+                <p className="mt-1 text-sm text-gray-400">{description}</p>
+            </div>
+            <div className="p-6">
+                {children}
+            </div>
+        </div>
+    );
+};
 
 export default SettingsCard;

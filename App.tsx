@@ -1,73 +1,101 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import type { User } from './types';
-import type { Session } from '@supabase/supabase-js';
+import React, { useState, useEffect } from 'react';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+import Home from './pages/Home';
+import GeneralSettings from './components/settings/GeneralSettings';
+import Login from './pages/Login';
+import ServerSelector from './pages/ServerSelector';
 import { supabase } from './services/supabaseClient';
-import Dashboard from './components/Dashboard';
+import { AnimatePresence, motion } from 'framer-motion';
+import type { Session, User } from '@supabase/supabase-js';
+
+export interface Guild {
+  id: string;
+  name: string;
+  icon: string;
+  owner: boolean;
+  permissions: string;
+}
+
+const Dashboard: React.FC<{ user: User; guild: Guild; onServerSelect: () => void }> = ({ user, guild, onServerSelect }) => {
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [activePage, setActivePage] = useState('Home');
+
+  const renderPage = () => {
+    switch (activePage) {
+      case 'General Settings':
+        return <GeneralSettings guild={guild} />;
+      case 'Home':
+      default:
+        return <Home user={user} />;
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-base-200 shadow-2xl shadow-black/30">
+        <Sidebar 
+          isSidebarOpen={isSidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          activePage={activePage} 
+          setActivePage={setActivePage} 
+        />
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header user={user} guild={guild} onMenuClick={() => setSidebarOpen(true)} onServerSelect={onServerSelect} />
+          
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-base-100 p-4 sm:p-6 md:p-8">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activePage}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {renderPage()}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
+      </div>
+  );
+};
+
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      setIsLoading(false);
-    });
+      setLoading(false);
+    };
+
+    getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
-
-  const handleLogin = async () => {
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'discord',
-      options: {
-        scopes: 'identify guilds email',
-      },
-    });
-    if (error) {
-      console.error('Error logging in:', error.message);
-      setError('Failed to log in. Please try again.');
-    }
-  };
-
-  const handleLogout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-  }, []);
-
-  const user: User | null = session ? {
-      id: session.user.id,
-      username: session.user.user_metadata.full_name || 'User',
-      avatar: session.user.user_metadata.avatar_url,
-  } : null;
-
-  if (isLoading) {
-    return <div>Loading...</div>;
+  
+  if (loading) {
+    return <div className="bg-base-100 min-h-screen"></div>; // Or a proper loading spinner
   }
 
-  return (
-    <div>
-      {session && user ? (
-        <Dashboard user={user} onLogout={handleLogout} providerToken={session.provider_token} />
-      ) : (
-        <div>
-            <h1>Bot Dashboard</h1>
-            <p>Please log in with Discord to continue.</p>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <button onClick={handleLogin}>Login with Discord</button>
-        </div>
-      )}
-    </div>
-  );
+  if (!session) {
+    return <Login />;
+  }
+  
+  if (!selectedGuild) {
+    return <ServerSelector session={session} onGuildSelect={setSelectedGuild} />;
+  }
+
+  return <Dashboard user={session.user} guild={selectedGuild} onServerSelect={() => setSelectedGuild(null)} />;
 };
 
 export default App;
