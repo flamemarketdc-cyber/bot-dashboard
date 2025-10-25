@@ -14,25 +14,31 @@ serve(async (req) => {
   }
 
   try {
-    // Create a Supabase client with the user's authorization.
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
-    // Get the user's session to access the provider token.
     const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
-    if (sessionError) throw sessionError;
-    if (!session) throw new Error('User not authenticated.');
+    if (sessionError) {
+      console.error('[get-guilds] Supabase session error:', sessionError.message);
+      throw new Error(`Authentication error: ${sessionError.message}`);
+    }
+
+    if (!session) {
+      console.error('[get-guilds] No active session found for the user.');
+      throw new Error('User not authenticated. Please log in again.');
+    }
 
     const accessToken = session.provider_token;
     if (!accessToken) {
-      throw new Error('Discord provider token not found in session. Please log out and back in.');
+      console.error('[get-guilds] Discord provider_token is missing from the session.');
+      // This is the critical, user-requested error message.
+      throw new Error('Discord provider token not found. Please enable "Session Refreshing" in your Supabase project\'s Discord Auth Provider settings and then log out and back in.');
     }
 
-    // Fetch guilds from Discord API
     const response = await fetch(`${DISCORD_API_URL}/users/@me/guilds`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -40,14 +46,22 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
-      const errorBody = await response.text()
-      console.error('[get-guilds] Discord API error:', { status: response.status, body: errorBody });
-      throw new Error(`Discord API request failed: ${response.status}. This could be due to an expired session.`);
+      const errorBody = await response.json().catch(() => response.text());
+      console.error('[get-guilds] Discord API error:', { 
+        status: response.status, 
+        body: errorBody 
+      });
+
+      // Provide a more specific error if the token is invalid (401)
+      if (response.status === 401) {
+          throw new Error('Your Discord session seems to have expired. Please log out and log back in.');
+      }
+      
+      throw new Error(`Failed to fetch guilds from Discord. Status: ${response.status}`);
     }
     
     const guilds = await response.json()
 
-    // Filter for guilds where the user has "Manage Server" permissions and map the data.
     const manageableGuilds = guilds
       .filter(
         (guild: any) => guild.owner || (parseInt(guild.permissions) & MANAGE_GUILD_PERMISSION)
@@ -67,10 +81,10 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
-    console.error('[get-guilds] An error occurred:', error.message);
+    console.error('[get-guilds] A critical error occurred:', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 400, // Keep 400 as it's a client-side originating issue (bad token/session)
     })
   }
 });
