@@ -3,6 +3,7 @@ import { supabase } from '../services/supabaseClient';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Guild } from '../App';
 import type { Session } from '@supabase/supabase-js';
+import { LogoutIcon } from '../components/Icons';
 
 interface ServerSelectorProps {
     session: Session;
@@ -52,7 +53,7 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
             }
 
             try {
-                const { data, error: funcError } = await supabase.functions.invoke('get-discord-guilds', {
+                const { data, error: funcError } = await supabase.functions.invoke('get-guilds', {
                     body: { accessToken: session.provider_token }
                 });
 
@@ -69,17 +70,38 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
 
         fetchGuilds();
     }, [session]);
+    
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+    };
+
 
     return (
-        <div className="min-h-screen bg-base-100 flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen bg-base-100 flex flex-col items-center justify-center p-4 relative">
+             <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+                 <button 
+                    onClick={handleLogout} 
+                    className="flex items-center gap-2 bg-base-300/50 hover:bg-base-300 px-4 py-2 rounded-lg text-gray-300 hover:text-white transition-colors"
+                >
+                    <LogoutIcon />
+                    <span className="hidden sm:inline">Logout</span>
+                </button>
+            </div>
             <div className="w-full max-w-4xl mx-auto">
                  <div className="text-center mb-8">
+                    <img src={session.user.user_metadata.avatar_url} alt="User Avatar" className="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-base-300"/>
                     <h1 className="text-4xl font-bold text-white mb-2">Select a Server</h1>
-                    <p className="text-gray-400">Choose a server to start managing its settings.</p>
+                    <p className="text-gray-400">Welcome, {session.user.user_metadata.full_name}. Choose a server to continue.</p>
                 </div>
 
                 {loading && <div className="text-center text-gray-400">Loading your servers...</div>}
-                {error && <div className="text-center text-vibrant-red bg-vibrant-red/10 p-4 rounded-lg">{error}</div>}
+                
+                {error && (
+                    <div className="text-center text-vibrant-red bg-vibrant-red/10 p-4 rounded-lg">
+                        <p className="font-semibold">{error}</p>
+                        <p className="mt-2 text-sm text-gray-400">This can happen if your session has expired. Please try logging out and back in.</p>
+                    </div>
+                )}
 
                 {!loading && !error && (
                     <motion.div 
