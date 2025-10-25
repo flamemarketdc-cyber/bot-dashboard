@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPreview, setIsPreview] = useState<boolean>(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -20,6 +21,9 @@ const App: React.FC = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+       if (session) {
+        setIsPreview(false); // If user logs in, exit preview
+      }
     });
 
     return () => {
@@ -44,13 +48,28 @@ const App: React.FC = () => {
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
     setSession(null);
+    setIsPreview(false);
   }, []);
+
+  const handlePreview = () => {
+    setIsPreview(true);
+  };
   
   const user: User | null = session ? {
       id: session.user.id,
       username: session.user.user_metadata.full_name || 'User',
       avatar: session.user.user_metadata.avatar_url,
   } : null;
+
+  const mockUser: User = {
+    id: 'preview-user-id',
+    username: 'Preview User',
+    avatar: 'https://cdn.discordapp.com/embed/avatars/2.png',
+  };
+
+  if (isPreview) {
+    return <Dashboard user={mockUser} onLogout={() => setIsPreview(false)} providerToken="preview" />;
+  }
 
   if (isLoading) {
     return (
@@ -66,7 +85,7 @@ const App: React.FC = () => {
         <Dashboard user={user} onLogout={handleLogout} providerToken={session.provider_token} />
       ) : (
         <div className="min-h-screen flex flex-col items-center justify-center p-4">
-            <Login onLogin={handleLogin} error={error} />
+            <Login onLogin={handleLogin} onPreview={handlePreview} error={error} />
         </div>
       )}
     </div>

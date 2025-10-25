@@ -65,3 +65,33 @@ export interface CommandSettings {
   errorCommandNotFoundEnabled: boolean;
   errorWrongUsageEnabled: boolean;
 }
+
+export interface LoggingSettings {
+    // Placeholder for future logging settings
+    enabled: boolean;
+}
+
+export interface ReactionRoleSettings {
+    // Placeholder for future reaction role settings
+    enabled: boolean;
+}
+
+export interface ModerationSettings {
+    enabled: boolean;
+}
+
+export interface SocialNotificationsSettings {
+    enabled: boolean;
+}
+
+export interface JoinRolesSettings {
+    enabled: boolean;
+}
+
+export interface WelcomeMessagesSettings {
+    enabled: boolean;
+}
+
+export interface RoleConnectionsSettings {
+    enabled: boolean;
+}

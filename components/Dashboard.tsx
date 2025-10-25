@@ -14,6 +14,17 @@ import GiveawaySettings from './settings/GiveawaySettings';
 import ClaimTimeSettings from './settings/ClaimTimeSettings';
 import CommandsSettings from './settings/CommandsSettings';
 import { DiscordLogoIcon, ErrorIcon } from './Icons';
+import MessagesSettings from './settings/MessagesSettings';
+import BrandingSettings from './settings/BrandingSettings';
+import LoggingSettings from './settings/LoggingSettings';
+import ReactionRoleSettings from './settings/ReactionRoleSettings';
+import CustomCommands from './settings/CustomCommands';
+import DefaultCommands from './settings/DefaultCommands';
+import ModerationSettings from './settings/ModerationSettings';
+import SocialNotificationsSettings from './settings/SocialNotificationsSettings';
+import JoinRolesSettings from './settings/JoinRolesSettings';
+import WelcomeMessagesSettings from './settings/WelcomeMessagesSettings';
+import RoleConnectionsSettings from './settings/RoleConnectionsSettings';
 
 interface DashboardProps {
   user: User;
@@ -30,13 +41,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   const [currentPath, setCurrentPath] = useState(window.location.hash || '#/dashboard');
   const [error, setError] = useState<string | null>(null);
   
-  // States for dashboard overview
+  // States for dashboard overview & sidebar toggles
+  const [moduleStatus, setModuleStatus] = useState({
+    autoMod: false,
+    moderation: false,
+    socialNotifications: false,
+    joinRoles: false,
+    reactionRoles: false,
+    welcomeMessages: false,
+    roleConnections: false,
+    logging: false,
+    tickets: false,
+    chatbot: false,
+    giveaways: false,
+    claimTime: false,
+  });
   const [prefix, setPrefix] = useState<string>(',');
-  const [ticketEnabled, setTicketEnabled] = useState<boolean>(false);
-  const [autoModEnabled, setAutoModEnabled] = useState<boolean>(false);
-  const [chatbotEnabled, setChatbotEnabled] = useState<boolean>(false);
-  const [giveawaysConfigured, setGiveawaysConfigured] = useState<boolean>(false);
-  const [claimTimeEnabled, setClaimTimeEnabled] = useState<boolean>(false);
+
 
   // Router effect
   useEffect(() => {
@@ -69,6 +90,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
             if (savedGuild) {
                 setSelectedGuild(savedGuild);
             }
+        } else if (fetchedGuilds.length > 0) {
+            // Select the first guild by default if none is saved
+            setSelectedGuild(fetchedGuilds[0]);
+            localStorage.setItem('selectedGuildId', fetchedGuilds[0].id);
         }
       })
       .catch(err => {
@@ -91,50 +116,49 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
             apiService.getChatbotSettings(guild.id),
             apiService.getGiveawaySettings(guild.id),
             apiService.getClaimTimeSettings(guild.id),
-            apiService.getCommandSettings(guild.id), // Fetch new settings
+            apiService.getModerationSettings(guild.id),
+            apiService.getSocialNotificationsSettings(guild.id),
+            apiService.getJoinRolesSettings(guild.id),
+            apiService.getWelcomeMessagesSettings(guild.id),
+            apiService.getRoleConnectionsSettings(guild.id),
+            apiService.getLoggingSettings(guild.id),
+            apiService.getReactionRolesSettings(guild.id),
         ]);
 
-        const [chRes, genRes, tktRes, amRes, cbRes, gvRes, ctRes, cmdRes] = results;
+        const [chRes, genRes, tktRes, amRes, cbRes, gvRes, ctRes, modRes, snRes, jrRes, wmRes, rcRes, logRes, rrRes] = results;
+        
+        const newModuleStatus = { ...moduleStatus };
         const failedModules: string[] = [];
 
         if (chRes.status === 'fulfilled') setChannels(chRes.value);
-        else {
-            console.error("Failed to fetch channels:", chRes.reason);
-            setChannels([]);
-        }
-
+        else console.error("Failed to fetch channels:", chRes.reason);
+        
         if (genRes.status === 'fulfilled') setPrefix(genRes.value.prefix);
-        else {
-            failedModules.push('General Settings');
-        }
+        else failedModules.push('General');
 
-        if (tktRes.status === 'fulfilled') setTicketEnabled(!!tktRes.value.panelChannelId);
-        else {
-            failedModules.push('Ticket System');
-        }
+        const checkStatus = (res: PromiseSettledResult<any>, key: keyof typeof moduleStatus, name: string) => {
+            if (res.status === 'fulfilled') {
+                if (key === 'giveaways') newModuleStatus[key] = res.value.managerRoleIds.length > 0;
+                else if (key === 'tickets') newModuleStatus[key] = !!res.value.panelChannelId;
+                else newModuleStatus[key] = res.value.enabled;
+            } else failedModules.push(name);
+        };
         
-        if (amRes.status === 'fulfilled') setAutoModEnabled(amRes.value.enabled);
-        else {
-            failedModules.push('Auto Moderation');
-        }
-        
-        if (cbRes.status === 'fulfilled') setChatbotEnabled(cbRes.value.enabled);
-        else {
-            failedModules.push('Chatbot');
-        }
-        
-        if (gvRes.status === 'fulfilled') setGiveawaysConfigured(gvRes.value.managerRoleIds.length > 0);
-        else {
-            failedModules.push('Giveaways');
-        }
-        
-        if (ctRes.status === 'fulfilled') setClaimTimeEnabled(ctRes.value.enabled);
-        else {
-            failedModules.push('Giveaway Claim Time');
-        }
-        
-        // Don't need to do anything with cmdRes for overview
+        checkStatus(tktRes, 'tickets', 'Tickets');
+        checkStatus(amRes, 'autoMod', 'Auto Moderation');
+        checkStatus(cbRes, 'chatbot', 'Chatbot');
+        checkStatus(gvRes, 'giveaways', 'Giveaways');
+        checkStatus(ctRes, 'claimTime', 'Claim Time');
+        checkStatus(modRes, 'moderation', 'Moderation');
+        checkStatus(snRes, 'socialNotifications', 'Social Notifications');
+        checkStatus(jrRes, 'joinRoles', 'Join Roles');
+        checkStatus(wmRes, 'welcomeMessages', 'Welcome Messages');
+        checkStatus(rcRes, 'roleConnections', 'Role Connections');
+        checkStatus(logRes, 'logging', 'Logging');
+        checkStatus(rrRes, 'reactionRoles', 'Reaction Roles');
 
+        setModuleStatus(newModuleStatus);
+        
         let finalError = '';
         if (chRes.status === 'rejected') {
             const reason = chRes.reason?.message || 'The server returned an unknown error.';
@@ -181,38 +205,62 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
         return <GeneralSettings guild={selectedGuild!} channels={channels} />;
       case '#/commands':
         return <CommandsSettings guild={selectedGuild!} />;
+      case '#/commands/custom':
+        return <CustomCommands />;
+      case '#/commands/default':
+        return <DefaultCommands />;
+      case '#/messages':
+        return <MessagesSettings guild={selectedGuild!} channels={channels} />;
+      case '#/branding':
+        return <BrandingSettings />;
+      case '#/auto-moderation':
+        return <AutoModSettings guild={selectedGuild!} />;
+      case '#/moderation':
+        return <ModerationSettings />;
+      case '#/social-notifications':
+        return <SocialNotificationsSettings />;
+      case '#/join-roles':
+        return <JoinRolesSettings />;
+      case '#/reaction-roles':
+        return <ReactionRoleSettings />;
+      case '#/welcome-messages':
+        return <WelcomeMessagesSettings />;
+      case '#/role-connections':
+        return <RoleConnectionsSettings />;
+      case '#/logging':
+        return <LoggingSettings />;
       case '#/tickets':
         return <TicketSettings guild={selectedGuild!} channels={channels} />;
-      case '#/automod':
-        return <AutoModSettings guild={selectedGuild!} />;
-      case '#/chatbot':
-        return <ChatbotSettings guild={selectedGuild!} channels={channels} />;
       case '#/giveaways':
         return <GiveawaySettings guild={selectedGuild!} />;
       case '#/claimtime':
         return <ClaimTimeSettings guild={selectedGuild!} />;
+      case '#/chatbot':
+        return <ChatbotSettings guild={selectedGuild!} channels={channels} />;
       case '#/dashboard':
       default:
         return <DashboardOverview
             selectedGuild={selectedGuild!}
             prefix={prefix}
-            ticketEnabled={ticketEnabled}
-            autoModEnabled={autoModEnabled}
-            chatbotEnabled={chatbotEnabled}
-            giveawaysConfigured={giveawaysConfigured}
-            claimTimeEnabled={claimTimeEnabled}
+            ticketEnabled={moduleStatus.tickets}
+            autoModEnabled={moduleStatus.autoMod}
+            chatbotEnabled={moduleStatus.chatbot}
+            giveawaysConfigured={moduleStatus.giveaways}
+            claimTimeEnabled={moduleStatus.claimTime}
         />;
     }
   };
   
   if (error && guilds.length === 0) {
     return (
-       <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
+       <div className="min-h-screen w-full flex flex-col bg-[#202225]">
         <Header user={user} onLogout={onLogout} />
-        <div className="w-full max-w-lg bg-zinc-900/50 backdrop-blur-sm shadow-2xl rounded-xl p-8 border border-red-700/60 text-center">
-            <ErrorIcon className="h-16 w-16 text-red-400 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-white mb-4">Failed to Fetch Servers</h2>
-            <p className="text-red-300">{error}</p>
+        <div className="flex-grow flex items-center justify-center p-4">
+            <div className="w-full max-w-lg bg-[#2f3136] shadow-lg rounded-xl p-8 border border-red-700/60 text-center">
+                <ErrorIcon className="h-16 w-16 text-red-400 mx-auto mb-6" />
+                <h2 className="text-2xl font-bold text-white mb-4">Failed to Fetch Servers</h2>
+                <p className="text-red-300">{error}</p>
+            </div>
         </div>
       </div>
     );
@@ -220,9 +268,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
 
   if (!selectedGuild) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen w-full flex flex-col bg-[#202225]">
           <Header user={user} onLogout={onLogout} />
-           <div className="w-full max-w-lg bg-zinc-900/50 backdrop-blur-sm shadow-2xl shadow-red-900/10 rounded-xl p-8 border border-zinc-700/60 text-center animate-fade-in-up">
+          <div className="flex-grow flex items-center justify-center p-4">
+           <div className="w-full max-w-lg bg-[#2f3136] shadow-lg rounded-xl p-8 border border-zinc-700 text-center animate-fade-in-up">
             <DiscordLogoIcon className="h-16 w-16 text-red-500 mx-auto mb-6" />
             <h2 className="text-3xl font-bold text-white mb-4">Select a Server</h2>
             <p className="text-zinc-400 mb-6">
@@ -243,13 +292,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
                 placeholder={loadingGuilds ? "Loading servers..." : "Choose your server..."}
             />
            </div>
+          </div>
       </div>
     );
   }
 
   return (
-    <div className="w-screen h-screen flex bg-[#16191C]">
-      <Sidebar onRefresh={() => fetchAllSettings(selectedGuild)} />
+    <div className="w-screen h-screen flex bg-[#202225]">
+      <Sidebar 
+        onRefresh={() => fetchAllSettings(selectedGuild)}
+        moduleStatus={moduleStatus}
+      />
       <div className="flex-grow flex flex-col overflow-hidden">
         <Header 
             user={user} 
@@ -258,7 +311,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
             selectedGuild={selectedGuild}
             onGuildChange={handleGuildChange}
         />
-        <main className="flex-grow overflow-y-auto bg-[#1E2124]">
+        <main className="flex-grow overflow-y-auto bg-[#2f3136]">
           {error && !loadingData && (
              <div className="p-4 mx-6 md:mx-8 mt-6 md:mt-8 bg-red-900/50 border border-red-700/80 rounded-lg animate-fade-in-up">
                 <div className="flex items-start">

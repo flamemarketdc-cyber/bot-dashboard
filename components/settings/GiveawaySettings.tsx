@@ -67,7 +67,7 @@ const GiveawaySettings: React.FC<GiveawaySettingsProps> = ({ guild }) => {
             value={settings.managerRoleIds}
             onChange={handleInputChange}
             placeholder="Enter role IDs, separated by commas"
-            className="w-full bg-zinc-900 border border-zinc-700/80 rounded-lg p-3 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+            className="w-full bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
         />
         <p className="text-xs text-zinc-500 mt-1">Separate multiple role IDs with a comma.</p>
       </SettingsCard>
@@ -84,7 +84,7 @@ const GiveawaySettings: React.FC<GiveawaySettingsProps> = ({ guild }) => {
             value={settings.defaultEmoji}
             onChange={handleInputChange}
             placeholder="e.g., 🎉"
-            className="w-full max-w-xs bg-zinc-900 border border-zinc-700/80 rounded-lg p-3 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+            className="w-full max-w-xs bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
         />
       </SettingsCard>
     </SettingsLayout>

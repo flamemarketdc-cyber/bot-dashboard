@@ -12,7 +12,7 @@ interface CommandsSettingsProps {
 }
 
 const SettingsClickableCard: React.FC<{icon: React.ReactNode, title: string, description: string, href: string}> = ({icon, title, description, href}) => (
-    <a href={href} className="w-full flex items-center justify-between bg-zinc-900/50 backdrop-blur-sm border border-zinc-700/60 rounded-lg p-6 transition-all duration-200 hover:border-red-500/60 hover:bg-zinc-800/50">
+    <a href={href} className="w-full flex items-center justify-between bg-[#292b2f] border border-black/20 rounded-lg p-6 transition-all duration-200 hover:border-zinc-700/80 hover:bg-zinc-700/30">
         <div className="flex items-center gap-6">
             {icon}
             <div>
@@ -111,22 +111,22 @@ const CommandsSettings: React.FC<CommandsSettingsProps> = ({ guild }) => {
                 onChange={(e) => setNewPrefix(e.target.value)}
                 maxLength={5}
                 placeholder="New prefix..."
-                className="flex-grow bg-zinc-900 border border-zinc-700/80 rounded-lg p-2 text-zinc-200 focus:ring-2 focus:ring-red-500"
+                className="flex-grow bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500"
             />
             <button
                 onClick={addPrefix}
                 disabled={!newPrefix || settings.prefixes.length >= 5}
-                className="red-gradient-bg text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-all disabled:bg-zinc-600 disabled:cursor-not-allowed"
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center transition-all disabled:bg-zinc-600 disabled:cursor-not-allowed"
             >
                 Add
             </button>
         </div>
         <div className="flex flex-wrap gap-2">
             {settings.prefixes.map(prefix => (
-                <div key={prefix} className="flex items-center gap-2 bg-zinc-800/70 py-1 pl-3 pr-1 rounded-full">
+                <div key={prefix} className="flex items-center gap-1.5 bg-zinc-700/70 py-1 pl-3 pr-1 rounded-full">
                     <span className="font-mono text-zinc-200">{prefix}</span>
                     <button onClick={() => removePrefix(prefix)} className="p-1 text-zinc-400 hover:text-red-400 transition rounded-full hover:bg-red-900/40">
-                        <TrashIcon />
+                        <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5"><path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z"></path></svg>
                     </button>
                 </div>
             ))}
@@ -141,7 +141,7 @@ const CommandsSettings: React.FC<CommandsSettingsProps> = ({ guild }) => {
                 checked={settings.errorCommandNotFoundEnabled}
                 onChange={(e) => handleToggle(e, 'errorCommandNotFoundEnabled')}
             />
-            <hr className="border-zinc-700/60" />
+            <hr className="border-zinc-700/50" />
              <Toggle 
                 label="Wrong command usage"
                 description="Sent when an existing command is used incorrectly."

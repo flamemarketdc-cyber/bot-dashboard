@@ -104,7 +104,7 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({ guild, channels }) =>
                 value={settings.persona}
                 onChange={handleTextAreaChange}
                 rows={5}
-                className="w-full bg-zinc-900 border border-zinc-700/80 rounded-lg p-3 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+                className="w-full bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
                 placeholder="e.g., You are a witty bot that loves talking about video games..."
             />
           </div>

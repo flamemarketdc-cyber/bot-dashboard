@@ -3,6 +3,10 @@ import { corsHeaders } from '../_shared/cors.ts'
 
 const DISCORD_API_URL = 'https://discord.com/api/v10'
 
+// FIX: Declare the Deno global object to resolve TypeScript errors in environments
+// where Deno's global types are not automatically recognized.
+declare const Deno: any;
+
 serve(async (req: Request) => {
   // Explicitly handle the browser's preflight "OPTIONS" request.
   // This is crucial for fixing the CORS error.
@@ -16,7 +20,7 @@ serve(async (req: Request) => {
       throw new Error('Missing guildId parameter.');
     }
 
-    const BOT_TOKEN = (Deno as any).env.get('BOT_TOKEN');
+    const BOT_TOKEN = Deno.env.get('BOT_TOKEN');
     if (!BOT_TOKEN) {
       console.error('[get-channels] BOT_TOKEN secret not set in Supabase project settings.');
       throw new Error('Bot token is not configured on the server. Please contact the administrator.');

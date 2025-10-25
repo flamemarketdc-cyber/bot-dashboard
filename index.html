@@ -20,28 +20,13 @@
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   body {
     font-family: 'Inter', sans-serif;
-    background-color: #16191C; /* Darker background */
-    background-image: radial-gradient(circle at top right, rgba(127, 29, 29, 0.1), transparent 40%),
-                      radial-gradient(circle at bottom left, rgba(127, 29, 29, 0.1), transparent 50%);
-    background-attachment: fixed;
+    background-color: #202225; /* Dark grey, Discord-like background */
   }
-  .red-gradient-text {
-    background: linear-gradient(to right, #ef4444, #b91c1c);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-  }
-  .red-gradient-bg {
-     background-image: linear-gradient(to right, #ef4444, #b91c1c);
-  }
-  .backdrop-blur-sm {
-      backdrop-filter: blur(4px);
-  }
+
   @keyframes fade-in-up {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
@@ -49,7 +34,7 @@
     }
   }
   .animate-fade-in-up {
-    animation: fade-in-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    animation: fade-in-up 0.3s ease-out both;
   }
 </style>
 </head>

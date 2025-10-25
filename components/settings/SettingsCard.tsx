@@ -7,7 +7,7 @@ interface SettingsCardProps {
 }
 
 const SettingsCard: React.FC<SettingsCardProps> = ({ children, title, description }) => (
-    <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-700/60 rounded-lg p-6">
+    <div className="bg-[#292b2f] border border-black/20 rounded-lg p-6">
         {title && <h3 className="text-lg font-bold text-zinc-100 mb-1">{title}</h3>}
         {description && <p className="text-sm text-zinc-400 mb-4">{description}</p>}
         {children}

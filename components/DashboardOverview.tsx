@@ -1,6 +1,5 @@
 import React from 'react';
-// FIX: Import `AutoModIcon` which is used for the Auto Moderation stat card.
-import { CogIcon, TicketIcon, ShieldCheckIcon, ChatBubbleIcon, GiftIcon, ClockIcon, AutoModIcon } from './Icons';
+import { CogIcon, TicketIcon, AutoModIcon, ChatBubbleIcon, GiftIcon, ClockIcon, ShieldCheckIcon } from './Icons';
 import type { Guild } from '../types';
 
 interface DashboardOverviewProps {
@@ -8,24 +7,25 @@ interface DashboardOverviewProps {
     prefix: string;
     ticketEnabled: boolean;
     autoModEnabled: boolean;
+
     chatbotEnabled: boolean;
     giveawaysConfigured: boolean;
     claimTimeEnabled: boolean;
 }
 
-const StatCard: React.FC<{title: string; value: string; status?: boolean; icon: React.ReactNode}> = ({title, value, status, icon}) => (
-    <div className="bg-[#16191C]/50 backdrop-blur-sm p-6 rounded-lg border border-zinc-700/60 flex items-start gap-4 transition-all duration-300 hover:bg-zinc-800/60 hover:border-red-500/50 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-900/20">
-      <div className="bg-zinc-900 p-3 rounded-full border border-zinc-700">{icon}</div>
-      <div>
+const StatCard: React.FC<{title: string; value: string; status?: boolean; icon: React.ReactNode, href: string}> = ({title, value, status, icon, href}) => (
+    <a href={href} className="bg-[#292b2f] p-5 rounded-lg border border-black/20 flex items-start gap-4 transition-all duration-200 hover:bg-zinc-700/40 hover:border-black/30">
+      <div className="bg-black/20 p-3 rounded-full">{icon}</div>
+      <div className="flex-grow">
           <p className="text-zinc-400 text-sm font-medium">{title}</p>
           <p className="text-zinc-100 text-lg font-bold">{value}</p>
       </div>
       {status !== undefined && (
-          <span className={`ml-auto text-xs font-semibold px-2.5 py-1 rounded-full ${status ? 'bg-green-500/20 text-green-300' : 'bg-zinc-700/50 text-zinc-300'}`}>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${status ? 'bg-green-500/20 text-green-300' : 'bg-zinc-700 text-zinc-300'}`}>
               {status ? 'Enabled' : 'Disabled'}
           </span>
       )}
-    </div>
+    </a>
 );
 
 const DashboardOverview: React.FC<DashboardOverviewProps> = ({
@@ -39,15 +39,15 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 }) => {
     return (
         <div className="p-6 md:p-8 animate-fade-in-up">
-            <h2 className="text-4xl font-black red-gradient-text mb-2">Mission Control</h2>
-            <p className="text-zinc-400 mb-8">High-level overview of the bot's status in <span className="font-semibold text-red-400">{selectedGuild?.name}</span>.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatCard title="Bot Prefix" value={`'${prefix}'`} icon={<CogIcon />} />
-                <StatCard title="Ticket System" value={ticketEnabled ? 'Active' : 'Not Set Up'} status={ticketEnabled} icon={<TicketIcon />} />
-                <StatCard title="Auto Moderation" value={autoModEnabled ? 'Active' : 'Inactive'} status={autoModEnabled} icon={<AutoModIcon />} />
-                <StatCard title="Chatbot" value={chatbotEnabled ? 'Active' : 'Inactive'} status={chatbotEnabled} icon={<ChatBubbleIcon />} />
-                <StatCard title="Giveaways" value={giveawaysConfigured ? 'Configured' : 'Not Set Up'} status={giveawaysConfigured} icon={<GiftIcon />} />
-                <StatCard title="Giveaway Claim Time" value={claimTimeEnabled ? 'Active' : 'Inactive'} status={claimTimeEnabled} icon={<ClockIcon />} />
+            <h2 className="text-3xl font-bold text-white mb-2">Dashboard</h2>
+            <p className="text-zinc-400 mb-8">An overview of all modules on <span className="font-semibold text-zinc-100">{selectedGuild?.name}</span>.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <StatCard title="Bot Prefix" value={`'${prefix}'`} icon={<CogIcon className="text-zinc-300" />} href="#/general" />
+                <StatCard title="Auto Moderation" value={autoModEnabled ? 'Active' : 'Inactive'} status={autoModEnabled} icon={<AutoModIcon className="text-zinc-300"/>} href="#/auto-moderation" />
+                <StatCard title="Ticket System" value={ticketEnabled ? 'Active' : 'Not Set Up'} status={ticketEnabled} icon={<TicketIcon />} href="#/tickets" />
+                <StatCard title="Chatbot" value={chatbotEnabled ? 'Active' : 'Inactive'} status={chatbotEnabled} icon={<ChatBubbleIcon />} href="#/chatbot" />
+                <StatCard title="Giveaways" value={giveawaysConfigured ? 'Configured' : 'Not Set Up'} status={giveawaysConfigured} icon={<GiftIcon />} href="#/giveaways" />
+                <StatCard title="Giveaway Claim Time" value={claimTimeEnabled ? 'Active' : 'Inactive'} status={claimTimeEnabled} icon={<ClockIcon />} href="#/claimtime" />
             </div>
         </div>
     );

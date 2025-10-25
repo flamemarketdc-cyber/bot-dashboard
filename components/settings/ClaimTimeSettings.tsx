@@ -121,7 +121,7 @@ const ClaimTimeSettings: React.FC<ClaimTimeSettingsProps> = ({ guild }) => {
                     value={settings.defaultMinutes}
                     onChange={handleInputChange}
                     min="1"
-                    className="w-full max-w-xs bg-zinc-900 border border-zinc-700/80 rounded-lg p-3 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+                    className="w-full max-w-xs bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
                 />
             </div>
             <div>
@@ -130,8 +130,8 @@ const ClaimTimeSettings: React.FC<ClaimTimeSettingsProps> = ({ guild }) => {
                 </label>
                 <p className="text-xs text-zinc-400 mb-3">How to calculate claim time for users with multiple special roles.</p>
                 <div className="flex gap-2">
-                    <button onClick={() => handleLogicChange('highest')} className={`px-4 py-2 rounded-md text-sm font-semibold transition ${settings.logic === 'highest' ? 'red-gradient-bg text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'}`}>Highest Wins</button>
-                    <button onClick={() => handleLogicChange('additive')} className={`px-4 py-2 rounded-md text-sm font-semibold transition ${settings.logic === 'additive' ? 'red-gradient-bg text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'}`}>Additive</button>
+                    <button onClick={() => handleLogicChange('highest')} className={`px-4 py-2 rounded-md text-sm font-semibold transition ${settings.logic === 'highest' ? 'bg-red-600 text-white' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-200'}`}>Highest Wins</button>
+                    <button onClick={() => handleLogicChange('additive')} className={`px-4 py-2 rounded-md text-sm font-semibold transition ${settings.logic === 'additive' ? 'bg-red-600 text-white' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-200'}`}>Additive</button>
                 </div>
                 <p className="text-xs text-zinc-500 mt-2">
                     {settings.logic === 'highest'
@@ -147,20 +147,20 @@ const ClaimTimeSettings: React.FC<ClaimTimeSettingsProps> = ({ guild }) => {
         <p className="text-sm text-zinc-400 mb-4">Add specific roles to override the default claim time. This is great for rewarding VIPs or server boosters.</p>
         <div className="space-y-3">
             {settings.roleTimes.map((rt, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-lg">
+                <div key={index} className="flex items-center gap-3 p-2 bg-black/20 rounded-lg">
                     <input
                         type="text"
                         placeholder="Role ID"
                         value={rt.roleId}
                         onChange={(e) => handleRoleTimeChange(index, 'roleId', e.target.value)}
-                        className="flex-grow bg-zinc-900 border border-zinc-700/80 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500/80"
+                        className="flex-grow bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500/80"
                     />
                      <input
                         type="number"
                         placeholder="Minutes"
                         value={rt.minutes}
                         onChange={(e) => handleRoleTimeChange(index, 'minutes', e.target.value)}
-                        className="w-32 bg-zinc-900 border border-zinc-700/80 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500/80"
+                        className="w-32 bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500/80"
                     />
                     <button onClick={() => removeRoleTime(index)} className="p-2 text-zinc-400 hover:text-red-400 transition rounded-md hover:bg-red-900/40">
                         <TrashIcon />

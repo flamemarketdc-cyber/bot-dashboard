@@ -8,14 +8,91 @@ import type {
     ChatbotSettings,
     GiveawaySettings,
     ClaimTimeSettings,
-    CommandSettings
+    CommandSettings,
+    ModerationSettings
 } from '../types';
 import { supabase } from './supabaseClient';
+
+
+// --- MOCK DATA FOR PREVIEW MODE ---
+const mockGuilds: Guild[] = [
+    { id: '1', name: 'Flaming', icon: `https://cdn.discordapp.com/embed/avatars/0.png`, owner: true, permissions: '0' },
+    { id: '2', name: 'Test Guild XYZ', icon: `https://cdn.discordapp.com/embed/avatars/1.png`, owner: false, permissions: '0x20' },
+];
+
+const mockChannels: Channel[] = [
+    { id: 'c1', name: 'general', type: 0 },
+    { id: 'c2', name: 'announcements', type: 0 },
+    { id: 'c3', name: 'welcome-and-rules', type: 0 },
+    { id: 'c4', name: 'logs', type: 0 },
+    { id: 'cat1', name: 'SERVER CHANNELS', type: 4 },
+    { id: 'cat2', name: 'SUPPORT', type: 4 },
+];
+
+const mockGeneralSettings: GeneralSettings = {
+    prefix: '!',
+    welcomeChannelId: 'c3',
+    logChannelId: 'c4',
+};
+
+const mockTicketSettings: TicketSettings = {
+    panelChannelId: 'c2',
+    categoryId: 'cat2',
+    supportRoleIds: '123456789012345678',
+};
+
+const mockAutoModSettings: AutoModSettings = {
+    enabled: true,
+    blockBadWords: true,
+    antiSpam: true,
+    whitelistedRoles: "987654321098765432",
+};
+
+const mockChatbotSettings: ChatbotSettings = {
+    enabled: true,
+    channelId: 'c1',
+    persona: "You are a helpful and slightly sarcastic AI assistant for a Discord server. You love dad jokes.",
+};
+
+const mockGiveawaySettings: GiveawaySettings = {
+    managerRoleIds: "112233445566778899",
+    defaultEmoji: "🎁",
+};
+
+const mockClaimTimeSettings: ClaimTimeSettings = {
+    enabled: true,
+    defaultMinutes: 60,
+    logic: 'highest',
+    roleTimes: [{ roleId: '111', minutes: 120 }, { roleId: '222', minutes: 180 }],
+};
+
+const mockCommandSettings: CommandSettings = {
+    prefixes: ['!', '?', '.'],
+    errorCommandNotFoundEnabled: true,
+    errorWrongUsageEnabled: false,
+};
+
+const mockModerationSettings = { enabled: false };
+const mockSocialNotificationsSettings = { enabled: true };
+const mockJoinRolesSettings = { enabled: true };
+const mockWelcomeMessagesSettings = { enabled: false };
+const mockRoleConnectionsSettings = { enabled: false };
+const mockLoggingSettings = { enabled: true };
+const mockReactionRolesSettings = { enabled: true };
+
+
+const isPreviewGuild = (guildId: string) => mockGuilds.some(g => g.id === guildId);
+// --- END MOCK DATA ---
+
 
 export const apiService = {
   // NOTE: These functions now make authenticated requests to the Discord API
   // via a secure backend (Supabase Edge Functions).
   getGuilds: async (accessToken: string): Promise<Guild[]> => {
+    if (accessToken === 'preview') {
+        console.log("PREVIEW MODE: Returning mock guilds.");
+        return new Promise(resolve => setTimeout(() => resolve(mockGuilds), 500));
+    }
     console.log("Fetching guilds via Supabase Function...");
     
     console.log('Discord access token found. Invoking function...');
@@ -41,6 +118,10 @@ export const apiService = {
   },
 
   getChannels: async (guildId: string): Promise<Channel[]> => {
+    if (isPreviewGuild(guildId)) {
+        console.log(`PREVIEW MODE: Returning mock channels for guild ${guildId}.`);
+        return mockChannels;
+    }
      console.log(`Fetching channels for guild ${guildId} via Supabase Function...`);
      
      const { data: { session } } = await supabase.auth.getSession();
@@ -66,6 +147,7 @@ export const apiService = {
   // --- Bot Settings API (Now using Supabase) ---
   
   getGeneralSettings: async (guildId: string): Promise<GeneralSettings> => {
+      if (isPreviewGuild(guildId)) return mockGeneralSettings;
       const { data, error } = await supabase
         .from('guild_settings')
         .select('prefix, welcome_channel_id, log_channel_id')
@@ -97,6 +179,7 @@ export const apiService = {
   },
 
   getTicketSettings: async (guildId: string): Promise<TicketSettings> => {
+      if (isPreviewGuild(guildId)) return mockTicketSettings;
       const { data, error } = await supabase
         .from('guild_settings')
         .select('panel_channel_id, category_id, support_role_ids')
@@ -128,6 +211,7 @@ export const apiService = {
   },
 
   getAutoModSettings: async (guildId: string): Promise<AutoModSettings> => {
+      if (isPreviewGuild(guildId)) return mockAutoModSettings;
       const { data, error } = await supabase
         .from('guild_settings')
         .select('automod_enabled, automod_block_bad_words, automod_anti_spam, automod_whitelisted_roles')
@@ -161,6 +245,7 @@ export const apiService = {
     },
 
     getChatbotSettings: async (guildId: string): Promise<ChatbotSettings> => {
+        if (isPreviewGuild(guildId)) return mockChatbotSettings;
         const { data, error } = await supabase
             .from('guild_settings')
             .select('chatbot_enabled, chatbot_channel_id, chatbot_persona')
@@ -192,6 +277,7 @@ export const apiService = {
     },
 
     getGiveawaySettings: async (guildId: string): Promise<GiveawaySettings> => {
+        if (isPreviewGuild(guildId)) return mockGiveawaySettings;
         const { data, error } = await supabase
             .from('guild_settings')
             .select('giveaway_manager_role_ids, giveaway_default_emoji')
@@ -221,6 +307,7 @@ export const apiService = {
     },
     
     getClaimTimeSettings: async (guildId: string): Promise<ClaimTimeSettings> => {
+        if (isPreviewGuild(guildId)) return mockClaimTimeSettings;
         const { data, error } = await supabase
             .from('guild_settings')
             .select('claimtime_enabled, claimtime_default_minutes, claimtime_logic, claimtime_role_times')
@@ -257,6 +344,7 @@ export const apiService = {
     },
 
     getCommandSettings: async (guildId: string): Promise<CommandSettings> => {
+        if (isPreviewGuild(guildId)) return mockCommandSettings;
         const { data, error } = await supabase
             .from('guild_settings')
             .select('command_prefixes, command_error_not_found, command_error_wrong_usage')
@@ -285,5 +373,14 @@ export const apiService = {
             return { success: false, message: "Failed to save command settings." };
         }
         return { success: true, message: "Command settings saved!" };
-    }
+    },
+
+    // Mocks for new modules
+    getModerationSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockModerationSettings; return mockModerationSettings; },
+    getSocialNotificationsSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockSocialNotificationsSettings; return mockSocialNotificationsSettings; },
+    getJoinRolesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockJoinRolesSettings; return mockJoinRolesSettings; },
+    getWelcomeMessagesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockWelcomeMessagesSettings; return mockWelcomeMessagesSettings; },
+    getRoleConnectionsSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockRoleConnectionsSettings; return mockRoleConnectionsSettings; },
+    getLoggingSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockLoggingSettings; return mockLoggingSettings; },
+    getReactionRolesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockReactionRolesSettings; return mockReactionRolesSettings; },
 };
