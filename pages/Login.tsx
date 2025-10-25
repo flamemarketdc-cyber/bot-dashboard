@@ -8,8 +8,8 @@ const Login: React.FC = () => {
       provider: 'discord',
       options: {
         // We need 'identify' for user metadata (name, avatar), and 'guilds' to list servers.
-        // The 'email' scope is also a standard default for Supabase.
-        scopes: 'identify email guilds',
+        // 'offline_access' is critical for allowing Supabase to refresh the session token.
+        scopes: 'identify email guilds offline_access',
       },
     });
     if (error) {
