@@ -49,27 +49,26 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
             setLoading(true);
             setError(null);
             try {
-                // First, explicitly get the session to ensure the Supabase client
-                // has finished loading it and the Authorization header is set.
-                const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+                // First, explicitly get the session to ensure we have the token.
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
                 if (sessionError) {
                     throw new Error(`Authentication error: ${sessionError.message}`);
                 }
                 
-                if (!currentSession) {
+                if (!session) {
                     // This case should ideally be handled by the parent component (App.tsx),
                     // but it's good practice to have a safeguard.
                     throw new Error("You are not logged in. Please log in to view your servers.");
                 }
 
-                console.log("--- DEBUGGING: Checking session before invoking function... ---");
-                const { data: { session } } = await supabase.auth.getSession();
-                console.log("--- DEBUGGING: The session object is: ", session);
-
-                // Now that we have a confirmed session, we can safely invoke the function.
-                // The client will automatically use the session's JWT for the Authorization header.
-                const { data, error: funcError } = await supabase.functions.invoke('get-guilds');
+                // Manually set the Authorization header for the function invocation
+                // to prevent a race condition where the client isn't ready.
+                const { data, error: funcError } = await supabase.functions.invoke('get-guilds', {
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`
+                    }
+                });
 
                 if (funcError) throw funcError;
 
