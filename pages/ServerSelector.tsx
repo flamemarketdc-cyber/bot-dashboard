@@ -46,14 +46,30 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
 
     useEffect(() => {
         const fetchGuilds = async () => {
+            setLoading(true);
+            setError(null);
             try {
-                // The Supabase client automatically includes the user's auth header.
-                // The edge function will securely use this to get the Discord token.
+                // First, explicitly get the session to ensure the Supabase client
+                // has finished loading it and the Authorization header is set.
+                const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+
+                if (sessionError) {
+                    throw new Error(`Authentication error: ${sessionError.message}`);
+                }
+                
+                if (!currentSession) {
+                    // This case should ideally be handled by the parent component (App.tsx),
+                    // but it's good practice to have a safeguard.
+                    throw new Error("You are not logged in. Please log in to view your servers.");
+                }
+
+                // Now that we have a confirmed session, we can safely invoke the function.
+                // The client will automatically use the session's JWT for the Authorization header.
                 const { data, error: funcError } = await supabase.functions.invoke('get-guilds');
 
                 if (funcError) throw funcError;
 
-                // The function returns an object with an 'error' key on failure
+                // The Edge Function might return its own error object in the data payload.
                 if (data.error) throw new Error(data.error);
 
                 setGuilds(data);
@@ -66,7 +82,7 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
         };
 
         fetchGuilds();
-    }, [session]);
+    }, []); // An empty dependency array ensures this runs only once when the component mounts.
     
     const handleLogout = async () => {
         await supabase.auth.signOut();
