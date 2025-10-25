@@ -7,7 +7,9 @@ const Login: React.FC = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: {
-        scopes: 'guilds', // Request permission to access user's servers
+        // We need 'identify' for user metadata (name, avatar), and 'guilds' to list servers.
+        // The 'email' scope is also a standard default for Supabase.
+        scopes: 'identify email guilds',
       },
     });
     if (error) {

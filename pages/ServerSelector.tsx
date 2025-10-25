@@ -46,23 +46,20 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
 
     useEffect(() => {
         const fetchGuilds = async () => {
-            if (!session?.provider_token) {
-                setError("Authentication token is missing.");
-                setLoading(false);
-                return;
-            }
-
             try {
-                const { data, error: funcError } = await supabase.functions.invoke('get-guilds', {
-                    body: { accessToken: session.provider_token }
-                });
+                // The Supabase client automatically includes the user's auth header.
+                // The edge function will securely use this to get the Discord token.
+                const { data, error: funcError } = await supabase.functions.invoke('get-guilds');
 
                 if (funcError) throw funcError;
+
+                // The function returns an object with an 'error' key on failure
+                if (data.error) throw new Error(data.error);
 
                 setGuilds(data);
             } catch (e: any) {
                 console.error("Failed to fetch guilds:", e);
-                setError("Could not fetch your servers. Please try logging out and back in.");
+                setError(e.message || "Could not fetch your servers. Please try logging out and back in.");
             } finally {
                 setLoading(false);
             }
@@ -99,7 +96,7 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ session, onGuildSelect 
                 {error && (
                     <div className="text-center text-vibrant-red bg-vibrant-red/10 p-4 rounded-lg">
                         <p className="font-semibold">{error}</p>
-                        <p className="mt-2 text-sm text-gray-400">This can happen if your session has expired. Please try logging out and back in.</p>
+                        <p className="mt-2 text-sm text-gray-400">This can happen if your session has expired. Please try logging out and back in to refresh your connection with Discord.</p>
                     </div>
                 )}
 
