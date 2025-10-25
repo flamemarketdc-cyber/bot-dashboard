@@ -8,8 +8,13 @@ const Login: React.FC = () => {
       provider: 'discord',
       options: {
         // We need 'identify' for user metadata (name, avatar), and 'guilds' to list servers.
-        // 'offline_access' is critical for allowing Supabase to refresh the session token.
-        scopes: 'identify email guilds offline_access',
+        scopes: 'identify email guilds',
+        // By adding `prompt: 'consent'`, we force the user to re-approve the app on Discord.
+        // This is crucial for ensuring that Discord issues a new refresh_token,
+        // which allows Supabase to keep the session alive automatically.
+        queryParams: {
+          prompt: 'consent',
+        },
       },
     });
     if (error) {
