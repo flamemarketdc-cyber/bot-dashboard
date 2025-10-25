@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
     HomeIcon, CogIcon, CommandsIcon, MessagesIcon, BrandingIcon, AutoModIcon, 
-    TicketIcon, RefreshIcon, GiftIcon, ClockIcon, LoggingIcon, ReactionRoleIcon,
-    ChatBubbleIcon, ChevronDownIcon, ChevronUpIcon, ShieldCheckIcon, BellIcon,
-    UserPlusIcon, HandWavingIcon, LinkIcon
+    TicketIcon, GiftIcon, ClockIcon, LoggingIcon, ReactionRoleIcon,
+    ChatBubbleIcon, UserPlusIcon, HandWavingIcon, RefreshIcon
 } from './Icons';
 import Toggle from './Toggle';
 
 interface SidebarProps {
-    onRefresh: () => void;
     moduleStatus: { [key: string]: boolean };
+    onRefresh: () => void;
 }
 
 const NavItem: React.FC<{
@@ -28,7 +27,7 @@ const NavItem: React.FC<{
                 isSubItem ? 'pl-8' : 'pl-3'
             } ${
                 isActive 
-                    ? 'bg-zinc-700/60 text-white font-medium' 
+                    ? 'bg-zinc-800/70 text-white font-medium' 
                     : 'text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200'
             }`}
         >
@@ -56,7 +55,7 @@ const NavHeader: React.FC<{label: string}> = ({ label }) => (
     </h3>
 )
 
-const Sidebar: React.FC<SidebarProps> = ({ onRefresh, moduleStatus }) => {
+const Sidebar: React.FC<SidebarProps> = ({ moduleStatus, onRefresh }) => {
     const [activePath, setActivePath] = useState(window.location.hash || '#/dashboard');
     
     useEffect(() => {
@@ -69,6 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onRefresh, moduleStatus }) => {
     }, []);
     
     const mainNavItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: <HomeIcon className="w-5 h-5"/> },
         { id: 'general', label: 'General Settings', icon: <CogIcon /> },
         { id: 'commands', label: 'Commands', icon: <CommandsIcon /> },
         { id: 'messages', label: 'Messages', icon: <MessagesIcon /> },
@@ -77,32 +77,28 @@ const Sidebar: React.FC<SidebarProps> = ({ onRefresh, moduleStatus }) => {
 
     const modulesNavItems = [
         { id: 'auto-moderation', label: 'Auto Moderation', icon: <AutoModIcon />, statusKey: 'autoMod' },
-        { id: 'moderation', label: 'Moderation', icon: <ShieldCheckIcon />, statusKey: 'moderation' },
-        { id: 'social-notifications', label: 'Social Notifications', icon: <BellIcon />, statusKey: 'socialNotifications' },
+        { id: 'logging', label: 'Logging', icon: <LoggingIcon />, statusKey: 'logging' },
+        { id: 'tickets', label: 'Tickets', icon: <TicketIcon />, statusKey: 'tickets' },
+        { id: 'chatbot', label: 'Chatbot (AI)', icon: <ChatBubbleIcon />, statusKey: 'chatbot' },
+        { id: 'giveaways', label: 'Giveaways', icon: <GiftIcon />, statusKey: 'giveaways' },
+        { id: 'claimtime', label: 'Claim Time', icon: <ClockIcon />, statusKey: 'claimTime' },
+        { id: 'welcome-messages', label: 'Welcome Messages', icon: <HandWavingIcon />, statusKey: 'welcomeMessages' },
         { id: 'join-roles', label: 'Join Roles', icon: <UserPlusIcon />, statusKey: 'joinRoles' },
         { id: 'reaction-roles', label: 'Reaction Roles', icon: <ReactionRoleIcon />, statusKey: 'reactionRoles' },
-        { id: 'welcome-messages', label: 'Welcome Messages', icon: <HandWavingIcon />, statusKey: 'welcomeMessages' },
-        { id: 'role-connections', label: 'Role Connections', icon: <LinkIcon />, statusKey: 'roleConnections' },
-        { id: 'logging', label: 'Logging', icon: <LoggingIcon />, statusKey: 'logging' },
     ];
 
     return (
-        <aside className="w-60 bg-[#292b2f] flex-shrink-0 flex flex-col">
-            <div className="px-3 pt-3">
-                <div className="flex items-center gap-2 mb-3">
-                    <a href="#/dashboard" aria-label="Go to Dashboard" className={`h-9 w-10 flex items-center justify-center rounded-md transition-colors ${activePath ==='#/dashboard' ? 'bg-zinc-700/60 text-white' : 'text-zinc-400 hover:bg-zinc-700/40'}`}>
-                        <HomeIcon className="w-5 h-5"/>
-                    </a>
-                    <button
-                        onClick={onRefresh}
-                        className="flex-grow flex items-center justify-center gap-2 h-9 rounded-md text-sm font-semibold transition-all duration-200 text-zinc-300 bg-zinc-700/40 hover:bg-zinc-600/50"
-                    >
-                        <RefreshIcon className="w-4 h-4" />
-                        <span>Fetch roles/channels</span>
-                    </button>
-                </div>
+        <aside className="w-60 bg-[#1c1c1c]/80 backdrop-blur-md flex-shrink-0 flex flex-col border-r border-zinc-800">
+            <div className="p-3 border-b border-zinc-800">
+                 <button
+                    onClick={onRefresh}
+                    className="w-full flex items-center justify-center gap-2 h-9 rounded-md text-sm font-semibold transition-all duration-200 text-zinc-300 bg-zinc-700/40 hover:bg-zinc-700/80"
+                >
+                    <RefreshIcon className="w-4 h-4" />
+                    <span>Fetch Data</span>
+                </button>
             </div>
-            <nav className="flex-grow overflow-y-auto px-3 pb-3 space-y-0.5">
+            <nav className="flex-grow overflow-y-auto p-3 space-y-0.5">
                 {mainNavItems.map(item => (
                     <NavItem 
                         key={item.id}
@@ -127,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onRefresh, moduleStatus }) => {
                     />
                 ))}
             </nav>
-            <div className="p-3 mt-auto border-t border-black/20">
+            <div className="p-3 mt-auto border-t border-zinc-800">
                 <a href="#" className="text-xs text-zinc-500 hover:text-zinc-400">Links</a>
             </div>
         </aside>

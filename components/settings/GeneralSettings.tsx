@@ -75,7 +75,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ guild, channels }) =>
           name="prefix"
           value={settings.prefix}
           onChange={handleInputChange}
-          className="w-full max-w-xs bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+          className="w-full max-w-xs bg-[#1c1c1c] border border-zinc-800 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
         />
       </SettingsCard>
 

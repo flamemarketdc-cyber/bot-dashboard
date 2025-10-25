@@ -9,7 +9,7 @@ import type {
     GiveawaySettings,
     ClaimTimeSettings,
     CommandSettings,
-    ModerationSettings
+    LoggingSettings
 } from '../types';
 import { supabase } from './supabaseClient';
 
@@ -72,12 +72,20 @@ const mockCommandSettings: CommandSettings = {
     errorWrongUsageEnabled: false,
 };
 
-const mockModerationSettings = { enabled: false };
-const mockSocialNotificationsSettings = { enabled: true };
 const mockJoinRolesSettings = { enabled: true };
 const mockWelcomeMessagesSettings = { enabled: false };
-const mockRoleConnectionsSettings = { enabled: false };
-const mockLoggingSettings = { enabled: true };
+const mockLoggingSettings: LoggingSettings = {
+    enabled: true,
+    logChannelId: 'c4',
+    memberJoin: true,
+    memberLeave: true,
+    memberRoleUpdate: false,
+    messageEdit: true,
+    messageDelete: true,
+    channelCreate: true,
+    channelDelete: false,
+    channelUpdate: false,
+};
 const mockReactionRolesSettings = { enabled: true };
 
 
@@ -375,12 +383,54 @@ export const apiService = {
         return { success: true, message: "Command settings saved!" };
     },
 
+    getLoggingSettings: async (guildId: string): Promise<LoggingSettings> => {
+        if (isPreviewGuild(guildId)) return mockLoggingSettings;
+        const { data, error } = await supabase
+            .from('guild_settings')
+            .select('logging_enabled, logging_channel_id, logging_member_join, logging_member_leave, logging_member_role_update, logging_message_edit, logging_message_delete, logging_channel_create, logging_channel_delete, logging_channel_update')
+            .eq('guild_id', guildId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        return {
+            enabled: data?.logging_enabled ?? false,
+            logChannelId: data?.logging_channel_id ?? null,
+            memberJoin: data?.logging_member_join ?? false,
+            memberLeave: data?.logging_member_leave ?? false,
+            memberRoleUpdate: data?.logging_member_role_update ?? false,
+            messageEdit: data?.logging_message_edit ?? false,
+            messageDelete: data?.logging_message_delete ?? false,
+            channelCreate: data?.logging_channel_create ?? false,
+            channelDelete: data?.logging_channel_delete ?? false,
+            channelUpdate: data?.logging_channel_update ?? false,
+        };
+    },
+
+    saveLoggingSettings: async (guildId: string, settings: LoggingSettings): Promise<ApiResponse> => {
+        const { error } = await supabase.from('guild_settings').upsert({
+            guild_id: guildId,
+            logging_enabled: settings.enabled,
+            logging_channel_id: settings.logChannelId,
+            logging_member_join: settings.memberJoin,
+            logging_member_leave: settings.memberLeave,
+            logging_member_role_update: settings.memberRoleUpdate,
+            logging_message_edit: settings.messageEdit,
+            logging_message_delete: settings.messageDelete,
+            logging_channel_create: settings.channelCreate,
+            logging_channel_delete: settings.channelDelete,
+            logging_channel_update: settings.channelUpdate,
+        });
+
+        if (error) {
+            console.error("Error saving logging settings:", error);
+            return { success: false, message: "Failed to save settings." };
+        }
+        return { success: true, message: "Logging settings saved!" };
+    },
+
     // Mocks for new modules
-    getModerationSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockModerationSettings; return mockModerationSettings; },
-    getSocialNotificationsSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockSocialNotificationsSettings; return mockSocialNotificationsSettings; },
     getJoinRolesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockJoinRolesSettings; return mockJoinRolesSettings; },
     getWelcomeMessagesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockWelcomeMessagesSettings; return mockWelcomeMessagesSettings; },
-    getRoleConnectionsSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockRoleConnectionsSettings; return mockRoleConnectionsSettings; },
-    getLoggingSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockLoggingSettings; return mockLoggingSettings; },
     getReactionRolesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockReactionRolesSettings; return mockReactionRolesSettings; },
 };

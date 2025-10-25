@@ -21,11 +21,11 @@ const Select: React.FC<SelectProps> = ({ label, options, loading = false, placeh
         {loading && <div className="absolute inset-y-0 left-0 flex items-center pl-3"><Spinner size="sm" /></div>}
         <select
           {...props}
-          className={`w-full bg-[#202225] border border-black/50 rounded-md py-2.5 pr-10 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition appearance-none ${loading ? 'pl-10' : 'pl-3'} ${props.disabled ? 'cursor-not-allowed opacity-60' : ''}`}
+          className={`w-full bg-[#1c1c1c] border border-zinc-800 rounded-md py-2.5 pr-10 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition appearance-none ${loading ? 'pl-10' : 'pl-3'} ${props.disabled ? 'cursor-not-allowed opacity-60' : ''}`}
         >
           <option value="" disabled={props.value !== ""}>{placeholder ?? "Select an option..."}</option>
           {options.map((option) => (
-            <option key={option.value} value={option.value} className="bg-[#2f3136]">
+            <option key={option.value} value={option.value} className="bg-[#1c1c1c]">
               {option.label}
             </option>
           ))}

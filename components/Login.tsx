@@ -9,7 +9,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin, onPreview, error }) => {
   return (
-    <div className="w-full max-w-md mx-auto bg-zinc-800 shadow-lg rounded-lg p-8 border border-zinc-700 text-center animate-fade-in-up">
+    <div className="w-full max-w-md mx-auto bg-zinc-900/80 backdrop-blur-md shadow-lg rounded-lg p-8 border border-zinc-800/80 text-center animate-fade-in-up">
       <div className="flex justify-center mb-6">
          <DiscordLogoIcon className="h-16 w-16 text-red-500" />
       </div>

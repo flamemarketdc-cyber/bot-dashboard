@@ -20,11 +20,8 @@ import LoggingSettings from './settings/LoggingSettings';
 import ReactionRoleSettings from './settings/ReactionRoleSettings';
 import CustomCommands from './settings/CustomCommands';
 import DefaultCommands from './settings/DefaultCommands';
-import ModerationSettings from './settings/ModerationSettings';
-import SocialNotificationsSettings from './settings/SocialNotificationsSettings';
 import JoinRolesSettings from './settings/JoinRolesSettings';
 import WelcomeMessagesSettings from './settings/WelcomeMessagesSettings';
-import RoleConnectionsSettings from './settings/RoleConnectionsSettings';
 
 interface DashboardProps {
   user: User;
@@ -44,12 +41,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   // States for dashboard overview & sidebar toggles
   const [moduleStatus, setModuleStatus] = useState({
     autoMod: false,
-    moderation: false,
-    socialNotifications: false,
     joinRoles: false,
     reactionRoles: false,
     welcomeMessages: false,
-    roleConnections: false,
     logging: false,
     tickets: false,
     chatbot: false,
@@ -116,16 +110,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
             apiService.getChatbotSettings(guild.id),
             apiService.getGiveawaySettings(guild.id),
             apiService.getClaimTimeSettings(guild.id),
-            apiService.getModerationSettings(guild.id),
-            apiService.getSocialNotificationsSettings(guild.id),
             apiService.getJoinRolesSettings(guild.id),
             apiService.getWelcomeMessagesSettings(guild.id),
-            apiService.getRoleConnectionsSettings(guild.id),
             apiService.getLoggingSettings(guild.id),
             apiService.getReactionRolesSettings(guild.id),
         ]);
 
-        const [chRes, genRes, tktRes, amRes, cbRes, gvRes, ctRes, modRes, snRes, jrRes, wmRes, rcRes, logRes, rrRes] = results;
+        const [chRes, genRes, tktRes, amRes, cbRes, gvRes, ctRes, jrRes, wmRes, logRes, rrRes] = results;
         
         const newModuleStatus = { ...moduleStatus };
         const failedModules: string[] = [];
@@ -149,11 +140,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
         checkStatus(cbRes, 'chatbot', 'Chatbot');
         checkStatus(gvRes, 'giveaways', 'Giveaways');
         checkStatus(ctRes, 'claimTime', 'Claim Time');
-        checkStatus(modRes, 'moderation', 'Moderation');
-        checkStatus(snRes, 'socialNotifications', 'Social Notifications');
         checkStatus(jrRes, 'joinRoles', 'Join Roles');
         checkStatus(wmRes, 'welcomeMessages', 'Welcome Messages');
-        checkStatus(rcRes, 'roleConnections', 'Role Connections');
         checkStatus(logRes, 'logging', 'Logging');
         checkStatus(rrRes, 'reactionRoles', 'Reaction Roles');
 
@@ -215,20 +203,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
         return <BrandingSettings />;
       case '#/auto-moderation':
         return <AutoModSettings guild={selectedGuild!} />;
-      case '#/moderation':
-        return <ModerationSettings />;
-      case '#/social-notifications':
-        return <SocialNotificationsSettings />;
       case '#/join-roles':
         return <JoinRolesSettings />;
       case '#/reaction-roles':
         return <ReactionRoleSettings />;
       case '#/welcome-messages':
         return <WelcomeMessagesSettings />;
-      case '#/role-connections':
-        return <RoleConnectionsSettings />;
       case '#/logging':
-        return <LoggingSettings />;
+        // FIX: Pass required 'guild' and 'channels' props to LoggingSettings.
+        return <LoggingSettings guild={selectedGuild!} channels={channels} />;
       case '#/tickets':
         return <TicketSettings guild={selectedGuild!} channels={channels} />;
       case '#/giveaways':
@@ -253,10 +236,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   
   if (error && guilds.length === 0) {
     return (
-       <div className="min-h-screen w-full flex flex-col bg-[#202225]">
+       <div className="min-h-screen w-full flex flex-col">
         <Header user={user} onLogout={onLogout} />
         <div className="flex-grow flex items-center justify-center p-4">
-            <div className="w-full max-w-lg bg-[#2f3136] shadow-lg rounded-xl p-8 border border-red-700/60 text-center">
+            <div className="w-full max-w-lg bg-[#181818]/80 backdrop-blur-md shadow-lg rounded-xl p-8 border border-red-700/60 text-center">
                 <ErrorIcon className="h-16 w-16 text-red-400 mx-auto mb-6" />
                 <h2 className="text-2xl font-bold text-white mb-4">Failed to Fetch Servers</h2>
                 <p className="text-red-300">{error}</p>
@@ -268,10 +251,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
 
   if (!selectedGuild) {
     return (
-      <div className="min-h-screen w-full flex flex-col bg-[#202225]">
+      <div className="min-h-screen w-full flex flex-col">
           <Header user={user} onLogout={onLogout} />
           <div className="flex-grow flex items-center justify-center p-4">
-           <div className="w-full max-w-lg bg-[#2f3136] shadow-lg rounded-xl p-8 border border-zinc-700 text-center animate-fade-in-up">
+           <div className="w-full max-w-lg bg-[#181818]/80 backdrop-blur-md shadow-lg rounded-xl p-8 border border-zinc-700/50 text-center animate-fade-in-up">
             <DiscordLogoIcon className="h-16 w-16 text-red-500 mx-auto mb-6" />
             <h2 className="text-3xl font-bold text-white mb-4">Select a Server</h2>
             <p className="text-zinc-400 mb-6">
@@ -279,7 +262,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
                     ? 'Fetching your servers...'
                     : guilds.length > 0
                         ? 'Choose a server to begin configuration.'
-                        : 'No manageable servers found. Make sure the bot is in your server and you have "Manage Server" permissions.'
+                                                : 'No manageable servers found. Make sure the bot is in your server and you have "Manage Server" permissions.'
                 }
             </p>
              <Select
@@ -298,12 +281,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
   }
 
   return (
-    <div className="w-screen h-screen flex bg-[#202225]">
-      <Sidebar 
-        onRefresh={() => fetchAllSettings(selectedGuild)}
-        moduleStatus={moduleStatus}
-      />
-      <div className="flex-grow flex flex-col overflow-hidden">
+    <div className="w-screen h-screen flex flex-col bg-transparent">
         <Header 
             user={user} 
             onLogout={onLogout} 
@@ -311,22 +289,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, providerToken }) 
             selectedGuild={selectedGuild}
             onGuildChange={handleGuildChange}
         />
-        <main className="flex-grow overflow-y-auto bg-[#2f3136]">
-          {error && !loadingData && (
-             <div className="p-4 mx-6 md:mx-8 mt-6 md:mt-8 bg-red-900/50 border border-red-700/80 rounded-lg animate-fade-in-up">
-                <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                        <ErrorIcon className="h-6 w-6 text-red-400" />
-                    </div>
-                    <div className="ml-3 flex-1">
-                        <h3 className="text-md font-semibold text-red-300">There was an issue loading server data</h3>
-                        <p className="text-sm text-zinc-300 mt-1">{error}</p>
+        <div className="flex flex-grow overflow-hidden">
+            <Sidebar moduleStatus={moduleStatus} onRefresh={() => fetchAllSettings(selectedGuild)} />
+            <main className="flex-grow overflow-y-auto bg-zinc-900/40 backdrop-blur-sm">
+              {error && !loadingData && (
+                 <div className="p-4 mx-6 md:mx-8 mt-6 md:mt-8 bg-red-900/50 border border-red-700/80 rounded-lg animate-fade-in-up">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                            <ErrorIcon className="h-6 w-6 text-red-400" />
+                        </div>
+                        <div className="ml-3 flex-1">
+                            <h3 className="text-md font-semibold text-red-300">There was an issue loading server data</h3>
+                            <p className="text-sm text-zinc-300 mt-1">{error}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-          )}
-          {renderContent()}
-        </main>
+              )}
+              {renderContent()}
+            </main>
       </div>
     </div>
   );

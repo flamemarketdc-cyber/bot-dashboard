@@ -14,7 +14,7 @@ interface DashboardOverviewProps {
 }
 
 const StatCard: React.FC<{title: string; value: string; status?: boolean; icon: React.ReactNode, href: string}> = ({title, value, status, icon, href}) => (
-    <a href={href} className="bg-[#292b2f] p-5 rounded-lg border border-black/20 flex items-start gap-4 transition-all duration-200 hover:bg-zinc-700/40 hover:border-black/30">
+    <a href={href} className="bg-[#1c1c1c] p-5 rounded-lg border border-zinc-800 flex items-start gap-4 transition-all duration-200 hover:bg-zinc-800/50 hover:border-zinc-700">
       <div className="bg-black/20 p-3 rounded-full">{icon}</div>
       <div className="flex-grow">
           <p className="text-zinc-400 text-sm font-medium">{title}</p>

@@ -121,7 +121,7 @@ const ClaimTimeSettings: React.FC<ClaimTimeSettingsProps> = ({ guild }) => {
                     value={settings.defaultMinutes}
                     onChange={handleInputChange}
                     min="1"
-                    className="w-full max-w-xs bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+                    className="w-full max-w-xs bg-[#1c1c1c] border border-zinc-800 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
                 />
             </div>
             <div>
@@ -147,20 +147,20 @@ const ClaimTimeSettings: React.FC<ClaimTimeSettingsProps> = ({ guild }) => {
         <p className="text-sm text-zinc-400 mb-4">Add specific roles to override the default claim time. This is great for rewarding VIPs or server boosters.</p>
         <div className="space-y-3">
             {settings.roleTimes.map((rt, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 bg-black/20 rounded-lg">
+                <div key={index} className="flex items-center gap-3 p-2 bg-zinc-900/70 rounded-lg">
                     <input
                         type="text"
                         placeholder="Role ID"
                         value={rt.roleId}
                         onChange={(e) => handleRoleTimeChange(index, 'roleId', e.target.value)}
-                        className="flex-grow bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500/80"
+                        className="flex-grow bg-[#1c1c1c] border border-zinc-800 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500/80"
                     />
                      <input
                         type="number"
                         placeholder="Minutes"
                         value={rt.minutes}
                         onChange={(e) => handleRoleTimeChange(index, 'minutes', e.target.value)}
-                        className="w-32 bg-[#202225] border border-black/50 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500/80"
+                        className="w-32 bg-[#1c1c1c] border border-zinc-800 rounded-md p-2 text-zinc-200 focus:ring-2 focus:ring-red-500/80"
                     />
                     <button onClick={() => removeRoleTime(index)} className="p-2 text-zinc-400 hover:text-red-400 transition rounded-md hover:bg-red-900/40">
                         <TrashIcon />

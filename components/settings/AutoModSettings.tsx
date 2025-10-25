@@ -11,7 +11,7 @@ interface AutoModSettingsProps {
 }
 
 const CategoryToggle: React.FC<{label: string, tag: string}> = ({label, tag}) => (
-    <div className="bg-[#202225] p-3 rounded-md flex justify-between items-center">
+    <div className="bg-zinc-900 p-3 rounded-md flex justify-between items-center border border-zinc-800">
         <div>
             <span className="text-white font-medium text-sm">{label}</span>
             <span className="ml-2 text-xs font-semibold bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full">{tag}</span>
@@ -21,13 +21,13 @@ const CategoryToggle: React.FC<{label: string, tag: string}> = ({label, tag}) =>
 );
 
 const ActionButton: React.FC<{label: string, children: React.ReactNode, hasConfig?: boolean}> = ({label, children, hasConfig}) => (
-    <div className="bg-[#202225] p-3 rounded-md flex justify-between items-center">
+    <div className="bg-zinc-900 p-3 rounded-md flex justify-between items-center border border-zinc-800">
         <div className="flex items-center gap-3">
             {children}
             <span className="text-white font-medium text-sm">{label}</span>
         </div>
         <div className="flex items-center gap-2">
-            {hasConfig && <button className="p-1.5 rounded-md hover:bg-zinc-600/50 text-zinc-300 hover:text-white"><CogIcon className="w-5 h-5"/></button>}
+            {hasConfig && <button className="p-1.5 rounded-md hover:bg-zinc-700/50 text-zinc-300 hover:text-white"><CogIcon className="w-5 h-5"/></button>}
             <button className="h-6 w-6 rounded-md flex items-center justify-center bg-red-600/50 text-red-200">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M18.4 4L12 10.4L5.6 4L4 5.6L10.4 12L4 18.4L5.6 20L12 13.6L18.4 20L20 18.4L13.6 12L20 5.6L18.4 4Z"></path></svg>
             </button>
@@ -60,7 +60,7 @@ const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
         </div>
 
         <div className="max-w-4xl mx-auto">
-            <div className="bg-[#292b2f] rounded-lg p-6 flex justify-between items-center mb-6">
+            <div className="bg-[#1c1c1c] rounded-lg p-6 flex justify-between items-center mb-6 border border-zinc-800">
                 <div>
                     <h3 className="font-bold text-white flex items-center gap-2">
                         AI Moderation
@@ -91,13 +91,13 @@ const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
                     <ActionButton label="Delete message">
                          <input type="checkbox" className="h-5 w-5 rounded bg-transparent border-2 border-zinc-500 text-red-500 focus:ring-red-500" />
                     </ActionButton>
-                    <button className="w-full border-2 border-dashed border-zinc-600 rounded-md p-3 text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors flex items-center justify-center gap-2">
+                    <button className="w-full border-2 border-dashed border-zinc-700 rounded-md p-3 text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors flex items-center justify-center gap-2">
                         <PlusIcon /> No other actions added
                     </button>
                 </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-zinc-700/50 flex justify-between items-center text-sm">
+            <div className="mt-8 pt-6 border-t border-zinc-800 flex justify-between items-center text-sm">
                 <div className="flex items-center gap-4">
                     <a href="#" className="text-zinc-300 hover:text-white hover:underline">Manage roles</a>
                     <a href="#" className="text-zinc-300 hover:text-white hover:underline">Manage channels</a>
@@ -110,7 +110,7 @@ const AutoModSettings: React.FC<AutoModSettingsProps> = ({ guild }) => {
                     Scanning 10 messages per minute <PlusIcon />
                 </div>
             </div>
-             <div className="mt-8 bg-[#292b2f] rounded-lg p-4 flex justify-between items-center">
+             <div className="mt-8 bg-[#1c1c1c] rounded-lg p-4 flex justify-between items-center border border-zinc-800">
                 <div>
                     <h3 className="font-semibold text-white flex items-center gap-2">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003 15v1a1 1 0 001 1h12a1 1 0 001-1v-1a1 1 0 00-.293-.707L16 11.586V8a6 6 0 00-6-6zM8.05 17a2 2 0 103.9 0H8.05z" /></svg>

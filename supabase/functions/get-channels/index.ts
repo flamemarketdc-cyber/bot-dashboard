@@ -32,14 +32,13 @@ serve(async (req: Request) => {
       },
     });
 
-    const responseBodyText = await discordResponse.text();
-
     if (!discordResponse.ok) {
+      const responseBodyText = await discordResponse.text();
       console.error(`[get-channels] Discord API Error (${discordResponse.status}):`, responseBodyText);
-      throw new Error(`Failed to fetch channels from Discord. The bot may not have the correct permissions for this server.`);
+      throw new Error(`Failed to fetch channels from Discord (Status: ${discordResponse.status}). Ensure the bot is in this server and has 'View Channel' permissions. Also, verify the BOT_TOKEN is correct.`);
     }
-
-    const channels = JSON.parse(responseBodyText);
+    
+    const channels = await discordResponse.json();
     
     // Filter for text (0) and category (4) channels to support all dashboard features
     const relevantChannels = channels.filter(
