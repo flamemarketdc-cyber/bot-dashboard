@@ -29,6 +29,7 @@ export interface GeneralSettings {
     logChannelId: string | null;
 }
 
+// FIX: Add missing settings interfaces to be used across the application.
 export interface TicketSettings {
     panelChannelId: string | null;
     categoryId: string | null;
@@ -37,9 +38,6 @@ export interface TicketSettings {
 
 export interface AutoModSettings {
     enabled: boolean;
-    blockBadWords: boolean;
-    antiSpam: boolean;
-    whitelistedRoles: string;
 }
 
 export interface ChatbotSettings {
@@ -61,9 +59,9 @@ export interface ClaimTimeSettings {
 }
 
 export interface CommandSettings {
-  prefixes: string[];
-  errorCommandNotFoundEnabled: boolean;
-  errorWrongUsageEnabled: boolean;
+    prefixes: string[];
+    errorCommandNotFoundEnabled: boolean;
+    errorWrongUsageEnabled: boolean;
 }
 
 export interface LoggingSettings {
@@ -77,17 +75,4 @@ export interface LoggingSettings {
     channelCreate: boolean;
     channelDelete: boolean;
     channelUpdate: boolean;
-}
-
-export interface ReactionRoleSettings {
-    // Placeholder for future reaction role settings
-    enabled: boolean;
-}
-
-export interface JoinRolesSettings {
-    enabled: boolean;
-}
-
-export interface WelcomeMessagesSettings {
-    enabled: boolean;
 }

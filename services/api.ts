@@ -3,104 +3,22 @@ import type {
     Channel, 
     ApiResponse, 
     GeneralSettings, 
+    // FIX: Import newly added settings types.
     TicketSettings,
     AutoModSettings,
     ChatbotSettings,
     GiveawaySettings,
     ClaimTimeSettings,
     CommandSettings,
-    LoggingSettings
+    LoggingSettings,
 } from '../types';
 import { supabase } from './supabaseClient';
-
-
-// --- MOCK DATA FOR PREVIEW MODE ---
-const mockGuilds: Guild[] = [
-    { id: '1', name: 'Flaming', icon: `https://cdn.discordapp.com/embed/avatars/0.png`, owner: true, permissions: '0' },
-    { id: '2', name: 'Test Guild XYZ', icon: `https://cdn.discordapp.com/embed/avatars/1.png`, owner: false, permissions: '0x20' },
-];
-
-const mockChannels: Channel[] = [
-    { id: 'c1', name: 'general', type: 0 },
-    { id: 'c2', name: 'announcements', type: 0 },
-    { id: 'c3', name: 'welcome-and-rules', type: 0 },
-    { id: 'c4', name: 'logs', type: 0 },
-    { id: 'cat1', name: 'SERVER CHANNELS', type: 4 },
-    { id: 'cat2', name: 'SUPPORT', type: 4 },
-];
-
-const mockGeneralSettings: GeneralSettings = {
-    prefix: '!',
-    welcomeChannelId: 'c3',
-    logChannelId: 'c4',
-};
-
-const mockTicketSettings: TicketSettings = {
-    panelChannelId: 'c2',
-    categoryId: 'cat2',
-    supportRoleIds: '123456789012345678',
-};
-
-const mockAutoModSettings: AutoModSettings = {
-    enabled: true,
-    blockBadWords: true,
-    antiSpam: true,
-    whitelistedRoles: "987654321098765432",
-};
-
-const mockChatbotSettings: ChatbotSettings = {
-    enabled: true,
-    channelId: 'c1',
-    persona: "You are a helpful and slightly sarcastic AI assistant for a Discord server. You love dad jokes.",
-};
-
-const mockGiveawaySettings: GiveawaySettings = {
-    managerRoleIds: "112233445566778899",
-    defaultEmoji: "🎁",
-};
-
-const mockClaimTimeSettings: ClaimTimeSettings = {
-    enabled: true,
-    defaultMinutes: 60,
-    logic: 'highest',
-    roleTimes: [{ roleId: '111', minutes: 120 }, { roleId: '222', minutes: 180 }],
-};
-
-const mockCommandSettings: CommandSettings = {
-    prefixes: ['!', '?', '.'],
-    errorCommandNotFoundEnabled: true,
-    errorWrongUsageEnabled: false,
-};
-
-const mockJoinRolesSettings = { enabled: true };
-const mockWelcomeMessagesSettings = { enabled: false };
-const mockLoggingSettings: LoggingSettings = {
-    enabled: true,
-    logChannelId: 'c4',
-    memberJoin: true,
-    memberLeave: true,
-    memberRoleUpdate: false,
-    messageEdit: true,
-    messageDelete: true,
-    channelCreate: true,
-    channelDelete: false,
-    channelUpdate: false,
-};
-const mockReactionRolesSettings = { enabled: true };
-
-
-const isPreviewGuild = (guildId: string) => mockGuilds.some(g => g.id === guildId);
-// --- END MOCK DATA ---
 
 
 export const apiService = {
   // NOTE: These functions now make authenticated requests to the Discord API
   // via a secure backend (Supabase Edge Functions).
   getGuilds: async (accessToken: string): Promise<Guild[]> => {
-    if (accessToken === 'preview') {
-        console.log("PREVIEW MODE: Returning mock guilds.");
-        return new Promise(resolve => setTimeout(() => resolve(mockGuilds), 500));
-    }
     console.log("Fetching guilds via Supabase Function...");
     
     console.log('Discord access token found. Invoking function...');
@@ -126,10 +44,6 @@ export const apiService = {
   },
 
   getChannels: async (guildId: string): Promise<Channel[]> => {
-    if (isPreviewGuild(guildId)) {
-        console.log(`PREVIEW MODE: Returning mock channels for guild ${guildId}.`);
-        return mockChannels;
-    }
      console.log(`Fetching channels for guild ${guildId} via Supabase Function...`);
      
      const { data: { session } } = await supabase.auth.getSession();
@@ -155,7 +69,6 @@ export const apiService = {
   // --- Bot Settings API (Now using Supabase) ---
   
   getGeneralSettings: async (guildId: string): Promise<GeneralSettings> => {
-      if (isPreviewGuild(guildId)) return mockGeneralSettings;
       const { data, error } = await supabase
         .from('guild_settings')
         .select('prefix, welcome_channel_id, log_channel_id')
@@ -186,25 +99,26 @@ export const apiService = {
       return { success: true, message: "General settings saved!" };
   },
 
+  // FIX: Implement missing API methods for all settings modules.
+  // --- Ticket Settings ---
   getTicketSettings: async (guildId: string): Promise<TicketSettings> => {
-      if (isPreviewGuild(guildId)) return mockTicketSettings;
       const { data, error } = await supabase
-        .from('guild_settings')
+        .from('ticket_settings')
         .select('panel_channel_id, category_id, support_role_ids')
         .eq('guild_id', guildId)
         .single();
-    
-      if (error && error.code !== 'PGRST116') throw error;
 
+      if (error && error.code !== 'PGRST116') throw error;
+      
       return {
           panelChannelId: data?.panel_channel_id ?? null,
           categoryId: data?.category_id ?? null,
-          supportRoleIds: data?.support_role_ids ?? "",
+          supportRoleIds: data?.support_role_ids ?? '',
       };
   },
-
+  
   saveTicketSettings: async (guildId: string, settings: TicketSettings): Promise<ApiResponse> => {
-      const { error } = await supabase.from('guild_settings').upsert({
+      const { error } = await supabase.from('ticket_settings').upsert({
           guild_id: guildId,
           panel_channel_id: settings.panelChannelId,
           category_id: settings.categoryId,
@@ -213,224 +127,197 @@ export const apiService = {
 
       if (error) {
           console.error("Error saving ticket settings:", error);
-          return { success: false, message: "Failed to save settings." };
+          return { success: false, message: "Failed to save ticket settings." };
       }
       return { success: true, message: "Ticket settings saved!" };
   },
 
+  // --- AutoMod Settings ---
   getAutoModSettings: async (guildId: string): Promise<AutoModSettings> => {
-      if (isPreviewGuild(guildId)) return mockAutoModSettings;
       const { data, error } = await supabase
-        .from('guild_settings')
-        .select('automod_enabled, automod_block_bad_words, automod_anti_spam, automod_whitelisted_roles')
+        .from('automod_settings')
+        .select('enabled')
         .eq('guild_id', guildId)
         .single();
+    
+      if (error && error.code !== 'PGRST116') throw error;
+
+      return {
+        enabled: data?.enabled ?? true,
+      };
+  },
+
+  // --- Chatbot Settings ---
+  getChatbotSettings: async (guildId: string): Promise<ChatbotSettings> => {
+      const { data, error } = await supabase
+          .from('chatbot_settings')
+          .select('enabled, channel_id, persona')
+          .eq('guild_id', guildId)
+          .single();
 
       if (error && error.code !== 'PGRST116') throw error;
 
       return {
-          enabled: data?.automod_enabled ?? false,
-          blockBadWords: data?.automod_block_bad_words ?? true,
-          antiSpam: data?.automod_anti_spam ?? true,
-          whitelistedRoles: data?.automod_whitelisted_roles ?? "",
+          enabled: data?.enabled ?? false,
+          channelId: data?.channel_id ?? null,
+          persona: data?.persona ?? '',
       };
   },
 
-    saveAutoModSettings: async (guildId: string, settings: AutoModSettings): Promise<ApiResponse> => {
-        const { error } = await supabase.from('guild_settings').upsert({
-            guild_id: guildId,
-            automod_enabled: settings.enabled,
-            automod_block_bad_words: settings.blockBadWords,
-            automod_anti_spam: settings.antiSpam,
-            automod_whitelisted_roles: settings.whitelistedRoles,
-        });
+  saveChatbotSettings: async (guildId: string, settings: ChatbotSettings): Promise<ApiResponse> => {
+      const { error } = await supabase.from('chatbot_settings').upsert({
+          guild_id: guildId,
+          enabled: settings.enabled,
+          channel_id: settings.channelId,
+          persona: settings.persona,
+      });
 
-        if (error) {
-            console.error("Error saving automod settings:", error);
-            return { success: false, message: "Failed to save settings." };
-        }
-        return { success: true, message: "Auto-moderation settings saved!" };
-    },
+      if (error) {
+          console.error("Error saving chatbot settings:", error);
+          return { success: false, message: "Failed to save chatbot settings." };
+      }
+      return { success: true, message: "Chatbot settings saved!" };
+  },
+  
+  // --- Giveaway Settings ---
+  getGiveawaySettings: async (guildId: string): Promise<GiveawaySettings> => {
+      const { data, error } = await supabase
+          .from('giveaway_settings')
+          .select('manager_role_ids, default_emoji')
+          .eq('guild_id', guildId)
+          .single();
 
-    getChatbotSettings: async (guildId: string): Promise<ChatbotSettings> => {
-        if (isPreviewGuild(guildId)) return mockChatbotSettings;
-        const { data, error } = await supabase
-            .from('guild_settings')
-            .select('chatbot_enabled, chatbot_channel_id, chatbot_persona')
-            .eq('guild_id', guildId)
-            .single();
+      if (error && error.code !== 'PGRST116') throw error;
 
-        if (error && error.code !== 'PGRST116') throw error;
+      return {
+          managerRoleIds: data?.manager_role_ids ?? '',
+          defaultEmoji: data?.default_emoji ?? '🎉',
+      };
+  },
 
-        return {
-            enabled: data?.chatbot_enabled ?? false,
-            channelId: data?.chatbot_channel_id ?? null,
-            persona: data?.chatbot_persona ?? "You are a helpful Discord bot.",
-        };
-    },
+  saveGiveawaySettings: async (guildId: string, settings: GiveawaySettings): Promise<ApiResponse> => {
+      const { error } = await supabase.from('giveaway_settings').upsert({
+          guild_id: guildId,
+          manager_role_ids: settings.managerRoleIds,
+          default_emoji: settings.defaultEmoji,
+      });
 
-    saveChatbotSettings: async (guildId: string, settings: ChatbotSettings): Promise<ApiResponse> => {
-        const { error } = await supabase.from('guild_settings').upsert({
-            guild_id: guildId,
-            chatbot_enabled: settings.enabled,
-            chatbot_channel_id: settings.channelId,
-            chatbot_persona: settings.persona,
-        });
+      if (error) {
+          console.error("Error saving giveaway settings:", error);
+          return { success: false, message: "Failed to save giveaway settings." };
+      }
+      return { success: true, message: "Giveaway settings saved!" };
+  },
 
-        if (error) {
-            console.error("Error saving chatbot settings:", error);
-            return { success: false, message: "Failed to save settings." };
-        }
-        return { success: true, message: "Chatbot settings saved!" };
-    },
+  // --- Claim Time Settings ---
+  getClaimTimeSettings: async (guildId: string): Promise<ClaimTimeSettings> => {
+      const { data, error } = await supabase
+          .from('claim_time_settings')
+          .select('enabled, default_minutes, logic, role_times')
+          .eq('guild_id', guildId)
+          .single();
 
-    getGiveawaySettings: async (guildId: string): Promise<GiveawaySettings> => {
-        if (isPreviewGuild(guildId)) return mockGiveawaySettings;
-        const { data, error } = await supabase
-            .from('guild_settings')
-            .select('giveaway_manager_role_ids, giveaway_default_emoji')
-            .eq('guild_id', guildId)
-            .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      return {
+          enabled: data?.enabled ?? false,
+          defaultMinutes: data?.default_minutes ?? 10,
+          logic: data?.logic ?? 'highest',
+          roleTimes: data?.role_times ?? [],
+      };
+  },
 
-        if (error && error.code !== 'PGRST116') throw error;
+  saveClaimTimeSettings: async (guildId: string, settings: ClaimTimeSettings): Promise<ApiResponse> => {
+      const { error } = await supabase.from('claim_time_settings').upsert({
+          guild_id: guildId,
+          enabled: settings.enabled,
+          default_minutes: settings.defaultMinutes,
+          logic: settings.logic,
+          role_times: settings.roleTimes,
+      });
 
-        return {
-            managerRoleIds: data?.giveaway_manager_role_ids ?? "",
-            defaultEmoji: data?.giveaway_default_emoji ?? "🎉",
-        };
-    },
+      if (error) {
+          console.error("Error saving claim time settings:", error);
+          return { success: false, message: "Failed to save claim time settings." };
+      }
+      return { success: true, message: "Claim time settings saved!" };
+  },
 
-    saveGiveawaySettings: async (guildId: string, settings: GiveawaySettings): Promise<ApiResponse> => {
-        const { error } = await supabase.from('guild_settings').upsert({
-            guild_id: guildId,
-            giveaway_manager_role_ids: settings.managerRoleIds,
-            giveaway_default_emoji: settings.defaultEmoji,
-        });
+  // --- Command Settings ---
+  getCommandSettings: async (guildId: string): Promise<CommandSettings> => {
+      const { data, error } = await supabase
+          .from('command_settings')
+          .select('prefixes, error_command_not_found_enabled, error_wrong_usage_enabled')
+          .eq('guild_id', guildId)
+          .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      return {
+          prefixes: data?.prefixes ?? [','],
+          errorCommandNotFoundEnabled: data?.error_command_not_found_enabled ?? true,
+          errorWrongUsageEnabled: data?.error_wrong_usage_enabled ?? true,
+      };
+  },
 
-        if (error) {
-            console.error("Error saving giveaway settings:", error);
-            return { success: false, message: "Failed to save settings." };
-        }
-        return { success: true, message: "Giveaway settings saved!" };
-    },
-    
-    getClaimTimeSettings: async (guildId: string): Promise<ClaimTimeSettings> => {
-        if (isPreviewGuild(guildId)) return mockClaimTimeSettings;
-        const { data, error } = await supabase
-            .from('guild_settings')
-            .select('claimtime_enabled, claimtime_default_minutes, claimtime_logic, claimtime_role_times')
-            .eq('guild_id', guildId)
-            .single();
+  saveCommandSettings: async (guildId: string, settings: CommandSettings): Promise<ApiResponse> => {
+      const { error } = await supabase.from('command_settings').upsert({
+          guild_id: guildId,
+          prefixes: settings.prefixes,
+          error_command_not_found_enabled: settings.errorCommandNotFoundEnabled,
+          error_wrong_usage_enabled: settings.errorWrongUsageEnabled,
+      });
 
-        if (error && error.code !== 'PGRST116') throw error;
+      if (error) {
+          console.error("Error saving command settings:", error);
+          return { success: false, message: "Failed to save command settings." };
+      }
+      return { success: true, message: "Command settings saved!" };
+  },
 
-        // Ensure roleTimes is always an array
-        const roleTimes = Array.isArray(data?.claimtime_role_times) ? data.claimtime_role_times : [];
+  // --- Logging Settings ---
+  getLoggingSettings: async (guildId: string): Promise<LoggingSettings> => {
+      const { data, error } = await supabase
+          .from('logging_settings')
+          .select('enabled, log_channel_id, member_join, member_leave, member_role_update, message_edit, message_delete, channel_create, channel_delete, channel_update')
+          .eq('guild_id', guildId)
+          .single();
 
-        return {
-            enabled: data?.claimtime_enabled ?? false,
-            defaultMinutes: data?.claimtime_default_minutes ?? 60,
-            logic: data?.claimtime_logic === 'additive' ? 'additive' : 'highest',
-            roleTimes: roleTimes,
-        };
-    },
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      return {
+          enabled: data?.enabled ?? false,
+          logChannelId: data?.log_channel_id ?? null,
+          memberJoin: data?.member_join ?? false,
+          memberLeave: data?.member_leave ?? false,
+          memberRoleUpdate: data?.member_role_update ?? false,
+          messageEdit: data?.message_edit ?? false,
+          messageDelete: data?.message_delete ?? false,
+          channelCreate: data?.channel_create ?? false,
+          channelDelete: data?.channel_delete ?? false,
+          channelUpdate: data?.channel_update ?? false,
+      };
+  },
 
-    saveClaimTimeSettings: async (guildId: string, settings: ClaimTimeSettings): Promise<ApiResponse> => {
-        const { error } = await supabase.from('guild_settings').upsert({
-            guild_id: guildId,
-            claimtime_enabled: settings.enabled,
-            claimtime_default_minutes: settings.defaultMinutes,
-            claimtime_logic: settings.logic,
-            claimtime_role_times: settings.roleTimes,
-        });
+  saveLoggingSettings: async (guildId: string, settings: LoggingSettings): Promise<ApiResponse> => {
+      const { error } = await supabase.from('logging_settings').upsert({
+          guild_id: guildId,
+          enabled: settings.enabled,
+          log_channel_id: settings.logChannelId,
+          member_join: settings.memberJoin,
+          member_leave: settings.memberLeave,
+          member_role_update: settings.memberRoleUpdate,
+          message_edit: settings.messageEdit,
+          message_delete: settings.messageDelete,
+          channel_create: settings.channelCreate,
+          channel_delete: settings.channelDelete,
+          channel_update: settings.channelUpdate,
+      });
 
-        if (error) {
-            console.error("Error saving claim time settings:", error);
-            return { success: false, message: "Failed to save settings." };
-        }
-        return { success: true, message: "Claim time settings saved!" };
-    },
-
-    getCommandSettings: async (guildId: string): Promise<CommandSettings> => {
-        if (isPreviewGuild(guildId)) return mockCommandSettings;
-        const { data, error } = await supabase
-            .from('guild_settings')
-            .select('command_prefixes, command_error_not_found, command_error_wrong_usage')
-            .eq('guild_id', guildId)
-            .single();
-
-        if (error && error.code !== 'PGRST116') throw error;
-
-        return {
-            prefixes: data?.command_prefixes ?? ['!'],
-            errorCommandNotFoundEnabled: data?.command_error_not_found ?? true,
-            errorWrongUsageEnabled: data?.command_error_wrong_usage ?? true,
-        };
-    },
-
-    saveCommandSettings: async (guildId: string, settings: CommandSettings): Promise<ApiResponse> => {
-        const { error } = await supabase.from('guild_settings').upsert({
-            guild_id: guildId,
-            command_prefixes: settings.prefixes,
-            command_error_not_found: settings.errorCommandNotFoundEnabled,
-            command_error_wrong_usage: settings.errorWrongUsageEnabled,
-        });
-
-        if (error) {
-            console.error("Error saving command settings:", error);
-            return { success: false, message: "Failed to save command settings." };
-        }
-        return { success: true, message: "Command settings saved!" };
-    },
-
-    getLoggingSettings: async (guildId: string): Promise<LoggingSettings> => {
-        if (isPreviewGuild(guildId)) return mockLoggingSettings;
-        const { data, error } = await supabase
-            .from('guild_settings')
-            .select('logging_enabled, logging_channel_id, logging_member_join, logging_member_leave, logging_member_role_update, logging_message_edit, logging_message_delete, logging_channel_create, logging_channel_delete, logging_channel_update')
-            .eq('guild_id', guildId)
-            .single();
-
-        if (error && error.code !== 'PGRST116') throw error;
-
-        return {
-            enabled: data?.logging_enabled ?? false,
-            logChannelId: data?.logging_channel_id ?? null,
-            memberJoin: data?.logging_member_join ?? false,
-            memberLeave: data?.logging_member_leave ?? false,
-            memberRoleUpdate: data?.logging_member_role_update ?? false,
-            messageEdit: data?.logging_message_edit ?? false,
-            messageDelete: data?.logging_message_delete ?? false,
-            channelCreate: data?.logging_channel_create ?? false,
-            channelDelete: data?.logging_channel_delete ?? false,
-            channelUpdate: data?.logging_channel_update ?? false,
-        };
-    },
-
-    saveLoggingSettings: async (guildId: string, settings: LoggingSettings): Promise<ApiResponse> => {
-        const { error } = await supabase.from('guild_settings').upsert({
-            guild_id: guildId,
-            logging_enabled: settings.enabled,
-            logging_channel_id: settings.logChannelId,
-            logging_member_join: settings.memberJoin,
-            logging_member_leave: settings.memberLeave,
-            logging_member_role_update: settings.memberRoleUpdate,
-            logging_message_edit: settings.messageEdit,
-            logging_message_delete: settings.messageDelete,
-            logging_channel_create: settings.channelCreate,
-            logging_channel_delete: settings.channelDelete,
-            logging_channel_update: settings.channelUpdate,
-        });
-
-        if (error) {
-            console.error("Error saving logging settings:", error);
-            return { success: false, message: "Failed to save settings." };
-        }
-        return { success: true, message: "Logging settings saved!" };
-    },
-
-    // Mocks for new modules
-    getJoinRolesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockJoinRolesSettings; return mockJoinRolesSettings; },
-    getWelcomeMessagesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockWelcomeMessagesSettings; return mockWelcomeMessagesSettings; },
-    getReactionRolesSettings: async (guildId: string) => { if(isPreviewGuild(guildId)) return mockReactionRolesSettings; return mockReactionRolesSettings; },
+      if (error) {
+          console.error("Error saving logging settings:", error);
+          return { success: false, message: "Failed to save logging settings." };
+      }
+      return { success: true, message: "Logging settings saved!" };
+  },
 };
