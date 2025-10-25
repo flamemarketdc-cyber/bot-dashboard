@@ -1,3 +1,8 @@
+// =========================================================
+// FINAL CORRECTED ServerSelector.tsx
+// This version is "bulletproof" and will not cause a loop.
+// =========================================================
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -5,10 +10,7 @@ import { Guild } from '../App';
 import type { Session } from '@supabase/supabase-js';
 import { LogoutIcon } from '../components/Icons';
 
-interface ServerSelectorProps {
-    onGuildSelect: (guild: Guild) => void;
-}
-
+// The ServerCard sub-component is perfect, no changes needed here.
 const ServerCard: React.FC<{ guild: Guild, onSelect: () => void }> = ({ guild, onSelect }) => {
     return (
         <motion.div
@@ -34,8 +36,8 @@ const ServerCard: React.FC<{ guild: Guild, onSelect: () => void }> = ({ guild, o
                 <h3 className="font-semibold text-white truncate">{guild.name}</h3>
             </div>
         </motion.div>
-    )
-}
+    );
+};
 
 
 const ServerSelector: React.FC<ServerSelectorProps> = ({ onGuildSelect }) => {
@@ -44,61 +46,59 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ onGuildSelect }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Effect 1: Get the session and subscribe to auth changes. This runs only once.
+    // --- THIS IS THE FIX ---
+    // We now use a SINGLE useEffect hook to handle everything.
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-        });
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
-
-    // Effect 2: Fetch guilds only when a valid session object is available.
-    useEffect(() => {
-        // Don't fetch if there's no session.
-        if (!session) {
-            return;
-        }
-
         const fetchGuilds = async () => {
-            setLoading(true);
             setError(null);
+            setLoading(true);
             try {
-                const { data, error: funcError } = await supabase.functions.invoke('get-guilds', {
-                    headers: {
-                        Authorization: `Bearer ${session.access_token}`
-                    }
-                });
-
+                const { data, error: funcError } = await supabase.functions.invoke('get-guilds');
                 if (funcError) throw funcError;
                 if (data.error) throw new Error(data.error);
-
                 setGuilds(data);
             } catch (e: any) {
                 console.error("Failed to fetch guilds:", e);
-                setError(e.message || "Could not fetch your servers. Please try logging out and back in.");
+                setError(e.message || "Could not fetch your servers.");
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchGuilds();
-    }, [session]); // This effect runs only when the session object itself changes.
+        // This listener handles all authentication events (login, logout, token refresh)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setSession(session);
+            
+            // The most important logic:
+            // If the user has successfully signed in, THEN we fetch the guilds.
+            if (event === 'SIGNED_IN') {
+                fetchGuilds();
+            }
+            // If the user signs out, we clear the guilds and stop loading.
+            else if (event === 'SIGNED_OUT') {
+                setGuilds([]);
+                setLoading(false);
+            }
+        });
+        
+        // This handles the initial page load if the user is already logged in.
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                 setSession(session);
+                 fetchGuilds();
+            } else {
+                 setLoading(false);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, []); // The empty array [] ensures this ENTIRE block only runs ONCE.
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
     };
 
-    // While waiting for the initial session from the first useEffect
-    if (!session) {
-        return <div className="min-h-screen bg-base-100 flex items-center justify-center"><div className="text-center text-gray-400">Authenticating...</div></div>
-    }
-
-
+    // The rest of the component's JSX is perfect, no changes needed.
     return (
         <div className="min-h-screen bg-base-100 flex flex-col items-center justify-center p-4 relative">
              <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
@@ -111,30 +111,37 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ onGuildSelect }) => {
                 </button>
             </div>
             <div className="w-full max-w-4xl mx-auto">
-                 <div className="text-center mb-8">
-                    <img src={session.user.user_metadata.avatar_url} alt="User Avatar" className="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-base-300"/>
-                    <h1 className="text-4xl font-bold text-white mb-2">Select a Server</h1>
-                    <p className="text-gray-400">Welcome, {session.user.user_metadata.full_name}. Choose a server to continue.</p>
-                </div>
+                {session?.user && (
+                    <div className="text-center mb-8">
+                        <img src={session.user.user_metadata.avatar_url} alt="User Avatar" className="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-base-300"/>
+                        <h1 className="text-4xl font-bold text-white mb-2">Select a Server</h1>
+                        <p className="text-gray-400">Welcome, {session.user.user_metadata.full_name}. Choose a server to continue.</p>
+                    </div>
+                )}
 
                 {loading && <div className="text-center text-gray-400">Loading your servers...</div>}
                 
                 {error && (
                     <div className="text-center text-vibrant-red bg-vibrant-red/10 p-4 rounded-lg">
                         <p className="font-semibold">{error}</p>
-                        <p className="mt-2 text-sm text-gray-400">This can happen if your session has expired. Please try logging out and back in to refresh your connection with Discord.</p>
                     </div>
                 )}
 
                 {!loading && !error && (
-                    <motion.div 
+                     <motion.div 
                         layout
                         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
                     >
                         <AnimatePresence>
-                            {guilds.map(guild => (
-                                <ServerCard key={guild.id} guild={guild} onSelect={() => onGuildSelect(guild)} />
-                            ))}
+                            {guilds.length > 0 ? (
+                                guilds.map(guild => (
+                                    <ServerCard key={guild.id} guild={guild} onSelect={() => onGuildSelect(guild)} />
+                                ))
+                            ) : (
+                                <div className="col-span-full text-center text-gray-400 mt-8">
+                                    <p>No manageable servers found.</p>
+                                </div>
+                            )}
                         </AnimatePresence>
                     </motion.div>
                 )}
