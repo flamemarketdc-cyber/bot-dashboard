@@ -1,9 +1,11 @@
 // supabase/functions/get-guilds/index.ts
 // --- NEW, MORE DIRECT VERSION ---
 
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 
-Deno.serve(async (req) => {
+// FIX: Property 'serve' does not exist on type 'typeof Deno'. Replaced `Deno.serve` with `serve` from the standard library for compatibility.
+serve(async (req) => {
   // CORS check remains the same
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
